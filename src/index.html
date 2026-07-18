@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<!--
+  archivo — offline hard-disk catalog
+  Copyright (C) 2026 Noar (just edit)
+
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the
+  Free Software Foundation, either version 3 of the License, or (at your
+  option) any later version. See <https://www.gnu.org/licenses/>.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>archivo 1.0.4</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --v:#5936d8; --vlt:#7a5ee8; --vbg:#0c0920;
+  --bg:#0d0d11; --panel:#111115; --card:#17171c; --card2:#1c1c22;
+  --rh:#1a1a22; --rs:#1a1230;
+  --bd:#222228; --bd2:#2e2e38; --bd3:#3a3a48;
+  --tx:#f2f2f5; --mu:#a8a8c0; --dm:#78788e;
+  --gr:#22c55e; --ye:#eab308; --or:#f97316; --re:#ef4444;
+  --font:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Inter',sans-serif;
+  --font-logo:'Poppins','SF Pro Display',sans-serif;
+  --mono:'SF Mono','JetBrains Mono','Fira Code',monospace;
+  --r:6px;
+  --row:30px;
+  --wnm:340px; --ws:130px; --wf:130px; --wk:96px; --wd:150px; --wn:170px;
+}
+@font-face{
+  font-family:'Poppins';
+  src:url('fonts/Poppins-Regular.ttf') format('truetype');
+  font-weight:400; font-style:normal; font-display:block;
+}
+@font-face{
+  font-family:'Poppins';
+  src:url('fonts/Poppins-Medium.ttf') format('truetype');
+  font-weight:500; font-style:normal; font-display:block;
+}
+@font-face{
+  font-family:'Poppins';
+  src:url('fonts/Poppins-SemiBold.ttf') format('truetype');
+  font-weight:600; font-style:normal; font-display:block;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:var(--font);font-size:14px;
+  display:flex;flex-direction:column;
+  -webkit-user-select:none;user-select:none;
+}
+
+/* ── TITLEBAR ── */
+#titlebar{
+  height:48px;background:var(--panel);border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;padding:0 16px 0 80px;
+  flex-shrink:0;-webkit-app-region:drag;
+}
+body.plat-other #titlebar{padding:0 16px;}
+#titlebar *{-webkit-app-region:no-drag;}
+.tb-appicon{height:22px;width:22px;object-fit:contain;margin-right:9px;border-radius:5px;}
+.welcome-icon{width:72px;height:72px;object-fit:contain;border-radius:16px;margin-bottom:18px;}
+.tb-div{display:none;}
+.tb-name{font-family:var(--font-logo);font-size:18px;font-weight:600;letter-spacing:.01em;text-transform:lowercase;color:var(--tx);}
+.tb-ver{font-family:var(--mono);font-size:12px;color:var(--dm);margin-left:10px;}
+.tb-sp{flex:1;}
+#tb-dbname{font-family:var(--mono);font-size:12px;color:var(--mu);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── TOOLBAR ── */
+#toolbar{
+  height:54px;background:var(--panel);border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;padding:0 12px;gap:2px;flex-shrink:0;
+}
+.btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;padding:6px 12px;border-radius:var(--r);cursor:pointer;
+  border:1px solid transparent;transition:all .1s;min-width:56px;
+}
+.btn:hover{background:var(--card);border-color:var(--bd);}
+.btn-ic{font-size:20px;line-height:1;color:var(--mu);}
+.btn-lb{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--dm);}
+.btn.prim .btn-ic{color:var(--v);}
+.tsep{width:1px;height:32px;background:var(--bd);margin:0 4px;}
+
+/* search bar */
+#search-zone{
+  display:flex;align-items:center;gap:8px;margin-left:auto;
+  background:var(--vbg);border:2px solid var(--v);border-radius:6px;
+  padding:0 12px;height:34px;transition:border-color .12s;
+}
+#search-zone:focus-within{border-color:var(--vlt);box-shadow:0 0 0 3px rgba(89,54,216,.15);}
+#search-ic{font-size:14px;color:var(--v);pointer-events:none;}
+#search-inp{
+  width:220px;background:transparent;border:none;
+  font-family:var(--mono);font-size:13px;color:var(--tx);
+  outline:none;-webkit-user-select:text!important;user-select:text!important;
+  pointer-events:all!important;
+}
+#search-inp::placeholder{color:rgba(89,54,216,.45);}
+#search-clear{display:none;cursor:pointer;color:var(--mu);font-size:13px;}
+#search-clear:hover{color:var(--tx);}
+.search-badge{
+  font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;
+  color:#fff;background:var(--v);padding:2px 6px;border-radius:3px;
+}
+
+/* ── MAIN ── */
+#main{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* ── CATALOG PANE ── */
+#cat{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* column headers */
+#col-hdr{
+  height:28px;display:flex;align-items:center;
+  background:var(--panel);border-bottom:1px solid var(--bd);
+  padding:0;flex-shrink:0;
+}
+.ch{
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--dm);
+  cursor:pointer;display:flex;align-items:center;gap:3px;
+  overflow:hidden;white-space:nowrap;position:relative;
+}
+.ch:hover{color:var(--mu);}
+.ch-nm{width:var(--wnm);flex-shrink:0;min-width:80px;}
+.ch-hdr-spacer{width:39px;flex-shrink:0;}
+.ch-sz{width:var(--ws);flex-shrink:0;text-align:right;padding-right:12px;}
+.ch-fr{width:var(--wf);flex-shrink:0;text-align:right;padding-right:12px;}
+.ch-kd{width:var(--wk);flex-shrink:0;}
+.ch-dt{width:var(--wd);flex-shrink:0;}
+.ch-nt{flex:1;min-width:80px;}
+.crh{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;background:transparent;transition:background .1s;}
+.crh:hover,.crh.dragging{background:var(--v);}
+
+/* path bar */
+#pathbar{
+  height:0;overflow:hidden;display:flex;align-items:center;gap:6px;
+  background:var(--card);border-bottom:1px solid transparent;
+  padding:0 12px;flex-shrink:0;
+  font-family:var(--mono);font-size:12px;color:var(--mu);
+  transition:height .12s;white-space:nowrap;overflow-x:auto;
+}
+#pathbar.on{height:26px;border-bottom-color:var(--bd);}
+#pathbar::-webkit-scrollbar{height:0;}
+.pb-disk{color:var(--v);font-weight:700;flex-shrink:0;}
+.pb-sep{color:var(--dm);flex-shrink:0;}
+.pb-seg{color:var(--mu);flex-shrink:0;}
+.pb-seg.last{color:var(--tx);}
+.pb-ic{flex-shrink:0;}
+
+/* update notice */
+#update-ov{display:none;position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.7);align-items:center;justify-content:center;}
+#update-ov.open{display:flex;}
+.upd-card{background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:26px 28px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.upd-h{font-family:var(--font);font-size:18px;font-weight:700;color:var(--tx);margin-bottom:6px;}
+.upd-sub{font-family:var(--font);font-size:13px;color:var(--mu);line-height:1.5;margin-bottom:20px;}
+.upd-actions{display:flex;gap:10px;justify-content:flex-end;}
+.upd-later{padding:9px 18px;background:transparent;border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--font);font-size:13px;color:var(--mu);cursor:pointer;}
+.upd-later:hover{border-color:var(--bd3);color:var(--tx);}
+.upd-go{padding:9px 20px;background:var(--v);border:none;border-radius:var(--r);font-family:var(--font);font-size:13px;font-weight:600;color:#fff;cursor:pointer;}
+.upd-go:hover{background:var(--vlt);}
+#tree-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+#tree-scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
+#tree-scroll::-webkit-scrollbar{width:6px;}
+input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!important;pointer-events:all!important;}
+#tree-scroll::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px;}
+#tree-body{}
+
+/* tree rows */
+.tr{
+  height:var(--row);display:flex;align-items:center;
+  cursor:pointer;border-bottom:1px solid transparent;
+}
+.tr:hover{background:var(--rh);}
+.tr.sel{background:var(--rs);}
+.tr.sel .tr-nm{color:var(--vlt);}
+.tr.disk-row{border-bottom:1px solid var(--bd);}
+.tr-tog{width:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--dm);}
+.tr-ic{font-size:15px;flex-shrink:0;margin-right:5px;}
+.vol-icn{width:18px;height:18px;object-fit:contain;vertical-align:middle;display:block;}
+.vol-svg{display:flex;align-items:center;justify-content:center;color:var(--mu);}
+.vol-svg svg{width:18px;height:18px;}
+.vol-svg-md{display:flex;align-items:center;justify-content:center;color:var(--mu);}
+.vol-svg-md svg{width:26px;height:26px;}
+.vol-svg-lg{display:flex;align-items:center;justify-content:center;color:var(--vlt);}
+.vol-svg-lg svg{width:38px;height:38px;}
+/* selected disk row → violet icon */
+.tr.disk-row.sel .vol-svg{color:var(--vlt);}
+.vol-item.sel .vol-svg-md{color:var(--vlt);}
+.tr-nm{width:var(--wnm);flex-shrink:0;min-width:80px;font-family:var(--mono);font-size:13px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tr-nm.disk{font-weight:700;font-size:13px;}
+.tr-sz{width:var(--ws);flex-shrink:0;font-family:var(--mono);font-size:12px;color:var(--mu);text-align:right;padding-right:12px;}
+.tr-fr{width:var(--wf);flex-shrink:0;font-family:var(--mono);font-size:12px;color:var(--gr);text-align:right;padding-right:12px;}
+.tr-kd{width:var(--wk);flex-shrink:0;font-family:var(--mono);font-size:12px;color:var(--dm);}
+.tr-dt{width:var(--wd);flex-shrink:0;font-family:var(--mono);font-size:12px;color:var(--dm);}
+.tr-nt{flex:1;min-width:80px;font-family:var(--mono);font-size:12px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;}
+/* fill bar for disk row size cell */
+.dfill-wrap{width:var(--ws);flex-shrink:0;padding-right:12px;display:flex;align-items:center;gap:5px;}
+.dfill-txt{font-family:var(--mono);font-size:12px;color:var(--mu);white-space:nowrap;}
+.dfill-bar{flex:1;height:3px;background:var(--bd);border-radius:2px;overflow:hidden;}
+.dfill-in{height:100%;border-radius:2px;}
+.fc0{background:var(--gr);}.fc50{background:var(--ye);}.fc80{background:var(--or);}.fc90{background:var(--re);}
+
+/* empty state */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;font-family:var(--mono);font-size:13px;color:var(--dm);text-align:center;}
+.cta{padding:10px 22px;background:var(--v);border:none;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;cursor:pointer;}
+.cta:hover{background:var(--vlt);}
+.cta2{padding:8px 16px;background:transparent;border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--mono);font-size:12px;color:var(--mu);cursor:pointer;margin-left:6px;}
+.cta2:hover{border-color:var(--v);color:var(--tx);}
+
+/* ── SEARCH RESULTS ── */
+#srch-panel{display:none;flex-direction:column;overflow:hidden;flex:1;}
+#srch-panel.on{display:flex;}
+.srch-hdr{padding:7px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+#sc{font-family:var(--mono);font-size:12px;color:var(--mu);}
+.sf{padding:2px 8px;border-radius:10px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--bd);color:var(--dm);cursor:pointer;}
+.sf:hover{border-color:var(--bd2);color:var(--mu);}
+.sf.on{background:var(--vbg);border-color:var(--v);color:var(--v);}
+.srch-close{margin-left:auto;padding:3px 9px;background:transparent;border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--mono);font-size:12px;color:var(--mu);cursor:pointer;}
+.srch-close:hover{border-color:var(--bd3);color:var(--tx);}
+#srch-list{flex:1;overflow-y:auto;}
+#srch-list::-webkit-scrollbar{width:6px;}
+#srch-list::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px;}
+.sr{height:var(--row);display:flex;align-items:center;cursor:pointer;padding-left:8px;}
+.sr:hover{background:var(--rh);}
+.sr-ic{font-size:15px;margin-right:6px;flex-shrink:0;}
+.sr-nm{font-family:var(--mono);font-size:13px;color:var(--tx);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sr-nm em{color:var(--vlt);font-style:normal;background:var(--vbg);border-radius:1px;}
+.sr-dk{font-family:var(--mono);font-size:12px;color:var(--v);width:100px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sr-pt{font-family:var(--mono);font-size:12px;color:var(--dm);width:220px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sr-sz{font-family:var(--mono);font-size:12px;color:var(--mu);width:80px;flex-shrink:0;text-align:right;padding-right:10px;}
+.sr-dt{font-family:var(--mono);font-size:12px;color:var(--dm);width:100px;flex-shrink:0;}
+.sr-grp{height:22px;display:flex;align-items:center;background:var(--panel);border-bottom:1px solid var(--bd);padding:0 8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dm);}
+
+/* ── INSPECTOR ── */
+#insp{width:280px;flex-shrink:0;background:var(--panel);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;transition:width .15s;}
+#insp.col{width:0;overflow:hidden;}
+.insp-hdr{height:28px;border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 12px;flex-shrink:0;}
+.insp-title{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dm);}
+#ib{flex:1;overflow-y:auto;padding:12px;}
+#ib::-webkit-scrollbar{width:3px;}
+#ib::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
+.is{margin-bottom:14px;}
+.ist{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dm);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--bd);}
+.ir{display:flex;justify-content:space-between;padding:3px 0;gap:8px;}
+.ik{font-family:var(--mono);font-size:12px;color:var(--dm);flex-shrink:0;}
+.iv{font-family:var(--mono);font-size:12px;color:var(--tx);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.iv.g{color:var(--gr);}.iv.v{color:var(--v);}
+.iv-e{
+  font-family:var(--mono);font-size:12px;color:var(--tx);
+  background:var(--card);border:1px solid var(--bd);border-radius:3px;
+  padding:2px 5px;outline:none;text-align:right;width:100%;
+  -webkit-user-select:text;user-select:text;transition:border-color .1s;
+}
+.iv-e:focus{border-color:var(--v);}
+.ibar{height:4px;background:var(--bd);border-radius:2px;overflow:hidden;margin:5px 0;}
+.ibfi{height:100%;border-radius:2px;}
+.ithumb{width:100%;height:68px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:10px;}
+.inta{
+  width:100%;min-height:70px;background:var(--card);border:1px solid var(--bd);
+  border-radius:var(--r);padding:7px;font-family:var(--mono);font-size:12px;
+  color:var(--tx);resize:vertical;outline:none;
+  -webkit-user-select:text;user-select:text;transition:border-color .12s;
+}
+.inta:focus{border-color:var(--v);}
+.inta::placeholder{color:var(--dm);}
+.insv{
+  margin-top:5px;padding:5px 10px;width:100%;background:var(--v);border:none;
+  border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:#fff;cursor:pointer;
+}
+.insv:hover{background:var(--vlt);}
+.ie{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-family:var(--mono);font-size:12px;color:var(--dm);text-align:center;gap:8px;}
+
+/* ── STATUS BAR ── */
+#sb{
+  height:24px;background:var(--panel);border-top:1px solid var(--bd);
+  display:flex;align-items:center;padding:0 14px;gap:12px;
+  flex-shrink:0;font-family:var(--mono);font-size:12px;color:var(--dm);
+}
+.sb-ver{color:var(--mu);font-weight:600;}
+.sb-link{color:var(--dm);cursor:pointer;text-decoration:none;}
+.sb-link:hover{color:var(--vlt);text-decoration:underline;}
+/* About modal */
+#about-ov{display:none;position:fixed;inset:0;z-index:1300;background:rgba(0,0,0,.72);align-items:center;justify-content:center;}
+#about-ov.open{display:flex;}
+.about-card{background:var(--card);border:1px solid var(--bd2);border-radius:14px;padding:30px 32px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.about-icon{width:64px;height:64px;object-fit:contain;border-radius:14px;margin-bottom:12px;}
+.about-name{font-family:var(--font-logo);font-size:26px;font-weight:600;color:var(--tx);text-transform:lowercase;letter-spacing:.01em;}
+.about-ver{font-family:var(--mono);font-size:13px;color:var(--mu);margin-top:2px;margin-bottom:14px;}
+.about-desc{font-family:var(--font);font-size:14px;color:var(--tx);line-height:1.5;margin-bottom:16px;}
+.about-gpl{font-family:var(--font);font-size:12px;color:var(--mu);line-height:1.55;margin-bottom:18px;}
+.about-links{display:flex;gap:16px;justify-content:center;margin-bottom:18px;}
+.about-lk{font-family:var(--font);font-size:13px;color:var(--vlt);cursor:pointer;text-decoration:none;}
+.about-lk:hover{text-decoration:underline;}
+.about-copy{font-family:var(--mono);font-size:10px;color:var(--dm);margin-bottom:18px;}
+.about-close{padding:9px 24px;background:var(--v);border:none;border-radius:var(--r);font-family:var(--font);font-size:13px;font-weight:600;color:#fff;cursor:pointer;}
+.about-close:hover{background:var(--vlt);}
+
+/* ── ADD DISK MODAL ── */
+#add-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;
+  display:none;align-items:center;justify-content:center;
+}
+.add-box{
+  background:var(--panel);border:1px solid var(--bd2);border-radius:8px;
+  padding:24px;width:500px;box-shadow:0 20px 60px rgba(0,0,0,.8);
+}
+.add-tit{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--v);margin-bottom:6px;}
+.add-sub{font-family:var(--mono);font-size:12px;color:var(--dm);margin-bottom:14px;line-height:1.6;}
+.add-vol-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.add-vol-lbl{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dm);}
+.add-ref{padding:3px 10px;background:transparent;border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--mono);font-size:12px;color:var(--mu);cursor:pointer;}
+.add-ref:hover{border-color:var(--v);color:var(--tx);}
+.add-ref.active{background:var(--vbg);border-color:var(--v);color:var(--v);}
+#vol-list{max-height:200px;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--r);margin-bottom:14px;}
+#vol-list::-webkit-scrollbar{width:4px;}
+#vol-list::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
+.vol-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--bd);}
+.vol-item:last-child{border-bottom:none;}
+.vol-item:hover{background:var(--card);}
+.vol-item.sel{background:var(--vbg);border-left:2px solid var(--v);}
+.vol-ic{font-size:22px;flex-shrink:0;}
+.vol-info{flex:1;min-width:0;}
+.vol-name{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--tx);}
+.vol-badge{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:9px;font-family:var(--font);font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--v);background:var(--vbg);border:1px solid var(--v);vertical-align:middle;}
+.vol-item.archived .vol-ic{opacity:.85;}
+#btn-confirm-add.is-update{background:var(--v);border-color:var(--v);}
+.vol-meta{font-family:var(--mono);font-size:12px;color:var(--dm);margin-top:2px;}
+.vol-right{text-align:right;flex-shrink:0;}
+.vol-free{font-family:var(--mono);font-size:12px;color:var(--gr);font-weight:600;}
+.vol-total{font-family:var(--mono);font-size:12px;color:var(--dm);}
+.vol-bar{height:2px;background:var(--bd);border-radius:1px;overflow:hidden;margin-top:4px;width:60px;}
+.vol-bfi{height:100%;border-radius:1px;}
+.add-fl{margin-bottom:10px;}
+.add-lbl{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dm);margin-bottom:4px;}
+.add-in{
+  width:100%;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);
+  padding:8px 10px;font-family:var(--mono);font-size:13px;color:var(--tx);
+  outline:none;-webkit-user-select:text;user-select:text;transition:border-color .12s;
+}
+.add-in:focus{border-color:var(--v);}
+.add-in::placeholder{color:var(--dm);}
+.add-in[readonly]{color:var(--mu);background:var(--card2);}
+.add-row{display:flex;gap:8px;}
+.add-row .add-fl{flex:1;}
+#scan-prog{display:none;margin-top:12px;}
+.sp-bar{height:3px;background:var(--bd);border-radius:2px;overflow:hidden;margin-bottom:5px;}
+#sp-fill{height:100%;background:var(--v);border-radius:2px;transition:width .1s;width:0%;}
+#sp-stat{font-family:var(--mono);font-size:12px;color:var(--v);}
+#sp-det{font-family:var(--mono);font-size:11px;color:var(--dm);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:450px;margin-top:2px;}
+.add-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+.btn-g{padding:8px 16px;background:transparent;border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--mu);cursor:pointer;}
+.btn-g:hover{border-color:var(--bd3);color:var(--tx);}
+.btn-p{padding:8px 18px;background:var(--v);border:none;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#fff;cursor:pointer;}
+.btn-p:hover{background:var(--vlt);}
+.btn-p:disabled{opacity:.35;cursor:default;}
+.btn-r{padding:8px 16px;background:transparent;border:1px solid #3a1818;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--re);cursor:pointer;}
+.btn-r:hover{background:#1f0a0a;}
+
+/* ── CONTEXT MENU ── */
+#ctx{position:fixed;z-index:3000;background:var(--card);border:1px solid var(--bd2);border-radius:var(--r);padding:3px;min-width:200px;display:none;box-shadow:0 10px 32px rgba(0,0,0,.8);}
+.cx{padding:7px 12px;font-family:var(--mono);font-size:12px;color:var(--mu);cursor:pointer;border-radius:3px;display:flex;align-items:center;gap:8px;}
+.cx:hover{background:var(--card2);color:var(--tx);}
+.cx.del:hover{background:#1f0a0a;color:var(--re);}
+.cxs{height:1px;background:var(--bd);margin:2px 5px;}
+
+/* ── CONFIRM MODAL ── */
+#mw{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;display:none;align-items:center;justify-content:center;}
+.modal{background:var(--panel);border:1px solid var(--bd2);border-radius:var(--r);padding:22px;max-width:400px;width:90%;}
+#mt{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--v);margin-bottom:12px;}
+#mb{font-family:var(--mono);font-size:13px;color:var(--mu);line-height:1.7;margin-bottom:16px;}
+#ma{display:flex;gap:6px;justify-content:flex-end;}
+
+/* ── WELCOME ── */
+#welcome{position:fixed;inset:0;z-index:800;background:rgba(10,10,14,.98);display:none;align-items:center;justify-content:center;}
+.wb{background:var(--panel);border:1px solid var(--bd2);border-radius:8px;padding:36px 40px;max-width:400px;width:90%;text-align:center;}
+.wt{font-family:var(--font-logo);font-size:32px;font-weight:600;letter-spacing:.01em;text-transform:lowercase;margin-bottom:6px;}
+.ws{font-family:var(--mono);font-size:12px;color:var(--dm);margin-bottom:24px;letter-spacing:.06em;}
+.wbtns{display:flex;flex-direction:column;gap:10px;}
+.wbp{padding:14px;background:var(--v);border:none;border-radius:var(--r);font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;cursor:pointer;width:100%;}
+.wbp:hover{background:var(--vlt);}
+.wbg{padding:10px;background:transparent;border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);cursor:pointer;width:100%;}
+.wbg:hover{border-color:var(--bd3);color:var(--tx);}
+
+/* ── TOASTS ── */
+#toasts{position:fixed;bottom:28px;right:16px;z-index:9999;display:flex;flex-direction:column-reverse;gap:5px;}
+.toast{padding:8px 14px;background:var(--card);border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--mono);font-size:12px;color:var(--mu);animation:tIn .15s ease;max-width:340px;}
+.toast.ok{border-color:var(--gr);color:var(--gr);}
+.toast.err{border-color:var(--re);color:var(--re);}
+.toast.info{border-color:var(--v);color:var(--v);}
+@keyframes tIn{from{opacity:0;transform:translateX(10px);}to{opacity:1;transform:none;}}
+
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div id="welcome">
+  <div class="wb">
+    <img src="assets/app-icon.png" class="welcome-icon" alt="" />
+    <div class="wt">archivo</div>
+    <div class="ws">v1.0.4 · Hard Disk Catalog</div>
+    <div class="wbtns">
+      <button class="wbp" id="btn-load-db">📂 Open Database</button>
+      <button class="wbg" id="btn-start-empty">Start empty catalog</button>
+    </div>
+  </div>
+</div>
+
+<!-- TITLEBAR -->
+<div id="titlebar">
+  <img src="assets/app-icon.png" class="tb-appicon" alt="" />
+  <span class="tb-name">archivo</span>
+  <div class="tb-sp"></div>
+  <span id="tb-dbname">No catalog loaded</span>
+</div>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <div class="btn prim" id="btn-add-disk">
+    <div class="btn-ic">＋</div>
+    <div class="btn-lb">Add Disk</div>
+  </div>
+  <div class="tsep"></div>
+  <div class="btn" id="btn-import">
+    <div class="btn-ic">📂</div>
+    <div class="btn-lb">Open Database</div>
+  </div>
+  <div class="btn" id="btn-export">
+    <div class="btn-ic">💾</div>
+    <div class="btn-lb">Save Database</div>
+  </div>
+  <div class="btn" id="btn-close">
+    <div class="btn-ic">✕</div>
+    <div class="btn-lb">Close Database</div>
+  </div>
+  <div class="tsep"></div>
+  <div class="btn" id="btn-delete">
+    <div class="btn-ic" style="color:var(--re)">🗑</div>
+    <div class="btn-lb">Delete</div>
+  </div>
+  <div class="tsep"></div>
+  <div class="btn" id="btn-inspector">
+    <div class="btn-ic">☰</div>
+    <div class="btn-lb">Inspector</div>
+  </div>
+  <div id="search-zone">
+    <span id="search-ic">🔍</span>
+    <input id="search-inp" placeholder="Search catalog…" />
+    <span id="search-clear">✕</span>
+    <span class="search-badge">Search</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="cat">
+    <div id="col-hdr">
+      <div class="ch-hdr-spacer"></div>
+      <div class="ch ch-nm" id="ch-name">Name<span id="sa-name"></span><div class="crh" id="crh-name"></div></div>
+      <div class="ch ch-sz" id="ch-size">Size<span id="sa-size"></span><div class="crh" id="crh-size"></div></div>
+      <div class="ch ch-fr" id="ch-free">Free<span id="sa-free"></span><div class="crh" id="crh-free"></div></div>
+      <div class="ch ch-kd">Kind<div class="crh" id="crh-kind"></div></div>
+      <div class="ch ch-dt" id="ch-date">Date Modified<span id="sa-date"></span><div class="crh" id="crh-date"></div></div>
+      <div class="ch ch-nt">Comments</div>
+    </div>
+    <div id="pathbar"></div>
+    <div id="tree-wrap">
+      <div id="tree-scroll"><div id="tree-body"></div></div>
+      <div id="srch-panel">
+        <div class="srch-hdr">
+          <span id="sc"></span>
+          <div style="display:flex;gap:4px;">
+            <div class="sf on" data-f="all">All</div>
+            <div class="sf" data-f="folder">Folders</div>
+            <div class="sf" data-f="video">Video</div>
+            <div class="sf" data-f="image">Images</div>
+            <div class="sf" data-f="audio">Audio</div>
+            <div class="sf" data-f="archive">Archives</div>
+            <div class="sf" data-f="doc">Docs</div>
+          </div>
+          <button class="srch-close" id="btn-srch-close">✕ Clear</button>
+        </div>
+        <div id="srch-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="insp">
+    <div class="insp-hdr"><span class="insp-title">Inspector</span></div>
+    <div id="ib"><div class="ie"><span style="font-size:28px;opacity:.15">☰</span>Select an item</div></div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="sb">
+  <span class="sb-ver" id="sb-ver">v1.0.4</span>
+  <a class="sb-link" id="sb-github">GitHub</a>
+  <a class="sb-link" id="sb-about">About</a>
+  <span style="color:var(--bd2)">|</span>
+  <span id="sb-sel">No selection</span>
+  <span style="margin-left:auto;" id="sb-tot">—</span>
+</div>
+
+<!-- ABOUT MODAL -->
+<div id="about-ov">
+  <div class="about-card">
+    <img src="assets/app-icon.png" class="about-icon" alt="" />
+    <div class="about-name">archivo</div>
+    <div class="about-ver" id="about-ver">v1.0.4</div>
+    <div class="about-desc">Catalogue your archive drives once, search them all offline.</div>
+    <div class="about-gpl">
+      Free software under the <strong>GNU General Public License v3</strong>.<br>
+      This program comes with ABSOLUTELY NO WARRANTY. You are welcome to
+      redistribute it under the terms of the GPLv3.
+    </div>
+    <div class="about-links">
+      <a class="about-lk" id="about-license">View license</a>
+      <a class="about-lk" id="about-repo">GitHub repository</a>
+    </div>
+    <div class="about-copy">© 2026 just edit · archivo is free software</div>
+    <button class="about-close" id="about-close">Close</button>
+  </div>
+</div>
+
+<!-- ADD DISK MODAL -->
+<div id="add-modal">
+  <div class="add-box">
+    <div class="add-tit">＋ Add Disk to Catalog</div>
+    <div class="add-sub">Select a mounted volume. archivo reads its info and scans all files automatically.</div>
+    <div class="add-vol-hdr">
+      <span class="add-vol-lbl">Mounted Volumes</span>
+<button class="add-ref" id="btn-hide-system" style="margin-right:4px;">Hide System</button><button class="add-ref" id="btn-hide-network" style="margin-right:4px;">Hide Network</button><button class="add-ref" id="btn-refresh-vols">↻ Refresh</button>
+    </div>
+    <div id="vol-list"><div style="padding:16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dm);">Click Refresh to list volumes…</div></div>
+    <div class="add-fl">
+      <div class="add-lbl">Disk Label <span style="color:var(--v)">*</span></div>
+      <input class="add-in" id="add-label" placeholder="Detected from volume name…" />
+    </div>
+    <div class="add-fl">
+      <div class="add-lbl">Note / Comments</div>
+      <input class="add-in" id="add-note" placeholder="Optional note…" />
+    </div>
+    <div class="add-row">
+      <div class="add-fl">
+        <div class="add-lbl">Model <span style="color:var(--dm);font-size:8px;font-weight:400">auto</span></div>
+        <input class="add-in" id="add-model" readonly placeholder="—" />
+      </div>
+      <div class="add-fl">
+        <div class="add-lbl">Serial <span style="color:var(--dm);font-size:8px;font-weight:400">auto</span></div>
+        <input class="add-in" id="add-serial" readonly placeholder="—" />
+      </div>
+    </div>
+    <div class="add-row">
+      <div class="add-fl">
+        <div class="add-lbl">Total <span style="color:var(--dm);font-size:8px;font-weight:400">auto</span></div>
+        <input class="add-in" id="add-total" readonly placeholder="—" />
+      </div>
+      <div class="add-fl">
+        <div class="add-lbl">Free <span style="color:var(--dm);font-size:8px;font-weight:400">auto</span></div>
+        <input class="add-in" id="add-free" readonly placeholder="—" />
+      </div>
+    </div>
+    <div id="scan-prog">
+      <div class="sp-bar"><div id="sp-fill"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div id="sp-stat">Scanning…</div>
+        <div id="sp-pct" style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--v);">0%</div>
+      </div>
+      <div id="sp-eta" style="font-family:var(--mono);font-size:9px;color:var(--mu);margin-top:2px;"></div>
+      <div id="sp-det"></div>
+      <button class="btn-r" id="btn-cancel-scan" style="margin-top:10px;width:100%;">⊗ Cancel Scan</button>
+    </div>
+    <div class="add-acts">
+      <button class="btn-g" id="btn-cancel-add">Cancel</button>
+      <button class="btn-p" id="btn-confirm-add" disabled>▶ Scan &amp; Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx">
+  <div class="cx" id="ctx-update">🔄 Update from Disk</div>
+  <div class="cxs" id="ctx-sep-upd"></div>
+  <div class="cx" id="ctx-rename">✏️ Rename Disk</div>
+  <div class="cx" id="ctx-note">💬 Edit Note</div>
+  <div class="cxs" id="ctx-sep"></div>
+  <div class="cx" id="ctx-reveal">🔍 Reveal in Finder</div>
+  <div class="cx" id="ctx-open">↗ Open</div>
+  <div class="cxs"></div>
+  <div class="cx del" id="ctx-del">⊗ Remove from Catalog</div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="mw">
+  <div class="modal">
+    <div id="mt"></div>
+    <div id="mb"></div>
+    <div id="ma"></div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div id="toasts"></div>
+
+<script>
+'use strict';
+
+/* ════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════ */
+let DB          = { disks: [] };
+let expanded    = new Set();
+let selected    = null;   // {type:'disk'|'node', disk, node?, key?}
+let appVersion  = '';
+let dismissedUpdateVersion = '';
+let ctxTarget   = null;
+let sortK       = 'name';
+let sortAsc     = true;
+let srchTimer   = null;
+let srchIndex   = [];
+let srchFilter  = 'all';
+let inspOpen    = true;
+let pendingVol  = null;
+let hideSystem  = false; // filter toggles in Add Disk modal
+let hideNetwork = false;
+
+const V  = new Set(['mp4','mov','avi','mkv','mxf','r3d','braw','mts','m2ts','wmv','prproj','drp','fcpbundle','aaf']);
+const I  = new Set(['jpg','jpeg','png','tif','tiff','raw','cr2','nef','arw','psd','ai','eps','svg','gif','webp','dpx','exr','heic']);
+const A  = new Set(['mp3','wav','aiff','aif','flac','aac','m4a','ogg']);
+const D  = new Set(['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','md','rtf','csv','xml','json']);
+const AR = new Set(['zip','rar','7z','tar','gz','bz2','tgz','tbz','sit','sitx','lha','lzh','z','cpgz','dmg']);
+
+
+/* ════════════════════════════════════════════════
+   TREE EVENT DELEGATION
+════════════════════════════════════════════════ */
+function getRow(e) { return e.target.closest('.tr'); }
+
+function treeClick(e) {
+  const row = getRow(e);
+  if (!row) return;
+  const did    = row.dataset.did;
+  const key    = row.dataset.key;
+  const isDisk = row.dataset.type === 'disk';
+  // Click on the toggle arrow area → expand/collapse
+  if (e.target.closest('.tr-tog')) {
+    e.stopPropagation();
+    // Only toggle if it's a disk or a directory (files have empty toggle)
+    if (isDisk) { togExp(did); selDisk(did); }
+    else if (row.dataset.file !== '1') { togExp(key); selNode(did, key); }
+    return;
+  }
+  // Click elsewhere on the row → select
+  isDisk ? selDisk(did) : selNode(did, key);
+}
+
+function treeDblClick(e) {
+  const row = getRow(e);
+  if (!row) return;
+  const did    = row.dataset.did;
+  const key    = row.dataset.key;
+  const isDisk = row.dataset.type === 'disk';
+  const isFile = row.dataset.file === '1';
+  if (isDisk) togExp(did);
+  else if (!isFile) togExp(key);
+}
+
+function treeCtx(e) {
+  const row = getRow(e);
+  if (!row) return;
+  const did    = row.dataset.did;
+  const key    = row.dataset.key;
+  const isDisk = row.dataset.type === 'disk';
+  showCtx(e, isDisk ? 'disk' : 'node', did, key);
+}
+
+
+/* ════════════════════════════════════════════════
+   KEYBOARD NAVIGATION
+════════════════════════════════════════════════ */
+function wireKeyboard() {
+  document.addEventListener('keydown', e => {
+    // Don't intercept when typing in inputs
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (!selected) return;
+
+    const rows  = Array.from(g('tree-body').querySelectorAll('.tr'));
+    const selRow = rows.find(r =>
+      (selected.type === 'disk' && r.dataset.type === 'disk' && r.dataset.did === selected.disk?.id) ||
+      (selected.type === 'node' && r.dataset.key === selected.key)
+    );
+    const idx = selRow ? rows.indexOf(selRow) : -1;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (idx < rows.length - 1) rows[idx + 1].click();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (idx > 0) rows[idx - 1].click();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (selected.type === 'disk' && !expanded.has(selected.disk.id)) togExp(selected.disk.id);
+      else if (selected.type === 'node' && selected.node?.type === 'dir' && !expanded.has(selected.key)) togExp(selected.key);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (selected.type === 'disk' && expanded.has(selected.disk.id)) togExp(selected.disk.id);
+      else if (selected.type === 'node' && selected.node?.type === 'dir' && expanded.has(selected.key)) togExp(selected.key);
+    }
+    // Scroll selected row into view
+    if (['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)) {
+      setTimeout(() => {
+        const newSel = g('tree-body').querySelector('.tr.sel');
+        if (newSel) newSel.scrollIntoView({ block: 'nearest' });
+      }, 20);
+    }
+  });
+}
+
+/* ════════════════════════════════════════════════
+   BOOT — runs immediately (script at end of body)
+════════════════════════════════════════════════ */
+(function boot() {
+  // Platform class: 'mac' keeps room for traffic lights; others use a native frame.
+  try {
+    const plat = (window.archivo && window.archivo.platform) || 'darwin';
+    document.body.classList.add(plat === 'darwin' ? 'plat-mac' : 'plat-other');
+  } catch (e) { document.body.classList.add('plat-mac'); }
+  wireButtons();
+  wireSearch();
+  wireSearchFilters();
+  wireModals();
+  wireColSort();
+  wireColResize();
+  wireCtxMenu();
+  wireKeyboard();
+  startApp();
+  initUpdatesAndPrefs();
+})();
+
+async function initUpdatesAndPrefs() {
+  try {
+    if (window.archivo) {
+      appVersion = await window.archivo.appVersion();
+      const vtxt = 'v' + (appVersion || '');
+      const sv = g('sb-ver'); if (sv) sv.textContent = vtxt;
+      const av = g('about-ver'); if (av) av.textContent = vtxt;
+      const prefs = await window.archivo.loadPrefs();
+      dismissedUpdateVersion = (prefs && prefs.dismissedUpdateVersion) || '';
+      window.archivo.onUpdateAvailable(showUpdateNotice);
+    }
+  } catch (e) {}
+}
+
+function openAbout() {
+  g('about-ov').classList.add('open');
+}
+
+function showUpdateNotice({ version, url }) {
+  if (!version || version === dismissedUpdateVersion) return;
+  if (document.getElementById('update-ov')) return;
+  const ov = document.createElement('div');
+  ov.id = 'update-ov'; ov.className = 'open';
+  ov.innerHTML =
+    '<div class="upd-card">' +
+      '<div class="upd-h">New version available</div>' +
+      '<div class="upd-sub">archivo v' + esc(version) + ' is available. You\u2019re on v' + esc(appVersion || '') + '.</div>' +
+      '<div class="upd-actions">' +
+        '<button class="upd-later" id="upd-later">Later</button>' +
+        '<button class="upd-go" id="upd-go">Get it</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(ov);
+  const dismiss = () => {
+    dismissedUpdateVersion = version;
+    try { window.archivo.savePrefs({ dismissedUpdateVersion: version }); } catch (e) {}
+    ov.remove();
+  };
+  ov.querySelector('#upd-later').onclick = dismiss;
+  ov.querySelector('#upd-go').onclick = () => { try { window.archivo.openExternal(url); } catch (e) {} dismiss(); };
+  ov.onclick = (e) => { if (e.target === ov) dismiss(); };
+}
+
+/* ════════════════════════════════════════════════
+   WIRE — all event listeners attached here,
+   no inline onclick anywhere
+════════════════════════════════════════════════ */
+function wireButtons() {
+  // Welcome
+  g('btn-load-db').addEventListener('click',    importCatalog);
+  g('btn-start-empty').addEventListener('click', startEmpty);
+  // Toolbar
+  g('btn-add-disk').addEventListener('click',   showAddDisk);
+  g('btn-import').addEventListener('click',     importCatalog);
+  g('btn-export').addEventListener('click',     exportCatalog);
+  g('btn-close').addEventListener('click',      closeDatabase);
+
+  // Footer: GitHub link + About modal
+  const REPO_URL = 'https://github.com/noar-justedit/archivo';
+  g('sb-github').addEventListener('click', () => { try { window.archivo.openExternal(REPO_URL); } catch(e){} });
+  g('sb-about').addEventListener('click', openAbout);
+  g('about-close').addEventListener('click', () => g('about-ov').classList.remove('open'));
+  g('about-ov').addEventListener('click', e => { if (e.target === g('about-ov')) g('about-ov').classList.remove('open'); });
+  g('about-repo').addEventListener('click', () => { try { window.archivo.openExternal(REPO_URL); } catch(e){} });
+  g('about-license').addEventListener('click', () => { try { window.archivo.openExternal(REPO_URL + '/blob/main/LICENSE'); } catch(e){} });
+  g('btn-delete').addEventListener('click',     deleteSelected);
+  g('btn-inspector').addEventListener('click',  toggleInspector);
+  // Add disk modal
+  g('btn-refresh-vols').addEventListener('click', refreshVols);
+  g('btn-hide-system').addEventListener('click', () => {
+    hideSystem = !hideSystem;
+    g('btn-hide-system').classList.toggle('active', hideSystem);
+    refreshVols();
+  });
+  g('btn-hide-network').addEventListener('click', () => {
+    hideNetwork = !hideNetwork;
+    g('btn-hide-network').classList.toggle('active', hideNetwork);
+    refreshVols();
+  });
+  g('btn-cancel-add').addEventListener('click',   hideAddDisk);
+  g('btn-cancel-scan').addEventListener('click',  cancelScan);
+  g('btn-confirm-add').addEventListener('click',  confirmAddDisk);
+  // Search clear
+  g('search-clear').addEventListener('click', clearSearch);
+  g('btn-srch-close').addEventListener('click', clearSearch);
+  // Context menu items
+  g('ctx-update').addEventListener('click', ctxUpdate);
+  g('ctx-rename').addEventListener('click', ctxRename);
+  g('ctx-note').addEventListener('click',   ctxNote);
+  g('ctx-reveal').addEventListener('click', ctxReveal);
+  g('ctx-open').addEventListener('click',   ctxOpen);
+  g('ctx-del').addEventListener('click',    ctxDelete);
+
+  // Tree event delegation on #tree-scroll (stable parent — never replaced by innerHTML)
+  const treeScroll = g('tree-scroll');
+  treeScroll.addEventListener('click',       treeClick);
+  treeScroll.addEventListener('dblclick',    treeDblClick);
+  treeScroll.addEventListener('contextmenu', treeCtx);
+}
+
+function wireSearch() {
+  const inp  = g('search-inp');
+  const zone = g('search-zone');
+  // Prevent ctx-close listener from swallowing search zone clicks
+  zone.addEventListener('click',     e => e.stopPropagation());
+  zone.addEventListener('mousedown', e => e.stopPropagation());
+  inp.addEventListener('input',   e => onSearch(e.target.value));
+  inp.addEventListener('keydown', e => { if (e.key === 'Escape') clearSearch(); });
+}
+
+function wireSearchFilters() {
+  document.querySelectorAll('.sf').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.sf').forEach(x => x.classList.remove('on'));
+      el.classList.add('on');
+      srchFilter = el.dataset.f;
+      const q = g('search-inp').value;
+      if (q.trim().length >= 2) execSearch(q);
+    });
+  });
+}
+
+function wireModals() {
+  g('mw').addEventListener('click', e => { if (e.target === g('mw')) hideModal(); });
+  g('add-modal').addEventListener('click', e => { if (e.target === g('add-modal')) hideAddDisk(); });
+}
+
+function wireColSort() {
+  [['ch-name','name'],['ch-size','size'],['ch-free','free'],['ch-date','date']].forEach(([id,k]) => {
+    g(id).addEventListener('click', e => {
+      if (!e.target.classList.contains('crh')) sortBy(k);
+    });
+  });
+}
+
+function wireColResize() {
+  const map = { 'crh-name':'--wnm', 'crh-size':'--ws','crh-free':'--wf','crh-kind':'--wk','crh-date':'--wd' };
+  let rz = null;
+  Object.entries(map).forEach(([id, cssVar]) => {
+    const handle = g(id);
+    if (!handle) return;
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault(); e.stopPropagation();
+      const sw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(cssVar)) || 120;
+      rz = { cssVar, sx: e.clientX, sw };
+      handle.classList.add('dragging');
+    });
+  });
+  document.addEventListener('mousemove', e => {
+    if (!rz) return;
+    const nw = Math.max(60, rz.sw + (e.clientX - rz.sx));
+    document.documentElement.style.setProperty(rz.cssVar, nw + 'px');
+  });
+  document.addEventListener('mouseup', () => {
+    if (rz) { document.querySelectorAll('.crh').forEach(c => c.classList.remove('dragging')); rz = null; }
+  });
+}
+
+function wireCtxMenu() {
+  // Close ctx menu on any click outside it — but never intercept input clicks
+  document.body.addEventListener('click', e => {
+    const ctx = g('ctx');
+    if (ctx && !ctx.contains(e.target)) ctx.style.display = 'none';
+  }, true); // capture phase so it runs first but doesn't preventDefault
+}
+
+/* ════════════════════════════════════════════════
+   APP START
+════════════════════════════════════════════════ */
+async function startApp() {
+  if (!window.archivo) {
+    await delay(100);
+    if (!window.archivo) {
+      showWelcome();
+      toast('Electron preload not found. Try rebuilding.', 'err');
+      return;
+    }
+  }
+  // Always start empty — no auto-loading of any previous database.
+  // The user explicitly opens or creates a database from the welcome screen.
+  DB = { disks: [] };
+  showWelcome();
+
+  // Scan progress events
+  window.archivo.onScanProgress(p => {
+    updateScanProgress(p);
+  });
+}
+
+/* ════════════════════════════════════════════════
+   WELCOME
+════════════════════════════════════════════════ */
+function showWelcome() { g('welcome').style.display = 'flex'; }
+function hideWelcome() { g('welcome').style.display = 'none'; }
+function startEmpty()  { hideWelcome(); DB = { disks:[] }; selected=null; expanded.clear(); refreshAll(); updatePathBar(); toast('Empty catalog. Add a disk to begin.','info'); }
+
+function closeDatabase() {
+  if (DB.disks.length === 0) { showWelcome(); return; }
+  showModal('Close Database',
+    'Close the current database?<br>Unsaved changes will be lost. Use <strong>Save Database</strong> first to keep your work.',
+    [
+      {label:'Cancel', cls:'btn-g', fn:hideModal},
+      {label:'Close',  cls:'btn-r', fn:()=>{
+        DB = { disks:[] }; selected=null; expanded.clear();
+        hideModal();
+        renderTree(); updateInsp(); updateSB(); updatePathBar();
+        g('tb-dbname').textContent = 'No catalog loaded';
+        showWelcome();
+      }},
+    ]);
+}
+
+/* ════════════════════════════════════════════════
+   IMPORT / EXPORT
+════════════════════════════════════════════════ */
+async function importCatalog() {
+  try {
+    const data = await window.archivo.importCatalog();
+    if (!data) return;
+    DB = data;
+    selected = null; expanded.clear();
+    hideWelcome();
+    refreshAll();
+    g('tb-dbname').textContent = 'Database open · ' + DB.disks.length + ' disk(s)';
+    toast('Opened ' + DB.disks.length + ' disk(s).', 'ok');
+  } catch(e) { toast('Open error: ' + e, 'err'); }
+}
+async function exportCatalog() {
+  if (!DB || !DB.disks || !DB.disks.length) { toast('Nothing to save. Add a disk first.', 'err'); return; }
+  try {
+    const dest = await window.archivo.exportCatalog(DB);
+    if (dest) {
+      g('tb-dbname').textContent = 'Saved · ' + DB.disks.length + ' disk(s)';
+      toast('Saved to ' + dest, 'ok');
+    }
+  } catch(e) { toast('Save error: ' + e, 'err'); }
+}
+
+/* ════════════════════════════════════════════════
+   SAVE
+════════════════════════════════════════════════ */
+async function save() {
+  try { await window.archivo.saveCatalog(DB); }
+  catch(e) { toast('Save error: ' + e, 'err'); }
+}
+
+/* ════════════════════════════════════════════════
+   REFRESH
+════════════════════════════════════════════════ */
+function refreshAll() {
+  renderTree();
+  buildIndex();
+  updateSB();
+  updateInsp();
+}
+
+/* ════════════════════════════════════════════════
+   SORT
+════════════════════════════════════════════════ */
+function sortBy(k) {
+  if (sortK === k) sortAsc = !sortAsc; else { sortK = k; sortAsc = true; }
+  ['name','size','free','date'].forEach(x => {
+    const el = g('sa-' + x);
+    if (el) el.textContent = sortK === x ? (sortAsc ? ' ↑' : ' ↓') : '';
+  });
+  renderTree();
+}
+function sorted() {
+  const d = [...DB.disks], dir = sortAsc ? 1 : -1;
+  switch(sortK) {
+    case 'size': return d.sort((a,b)=>(pgb(a.total)-pgb(b.total))*dir);
+    case 'free': return d.sort((a,b)=>(pgb(a.free)-pgb(b.free))*dir);
+    case 'date': return d.sort((a,b)=>(a.scanned||'').localeCompare(b.scanned||'')*dir);
+    default:     return d.sort((a,b)=>a.label.localeCompare(b.label)*dir);
+  }
+}
+
+/* ════════════════════════════════════════════════
+   TREE RENDER
+════════════════════════════════════════════════ */
+function renderTree() {
+  const body = g('tree-body');
+  if (!DB.disks.length) {
+    body.innerHTML = '<div class="empty"><div style="font-size:40px;opacity:.15">🗄</div><div>No disks in catalog</div><div style="display:flex;gap:8px;margin-top:6px;"><button class="cta" id="et-add">＋ Add Disk</button><button class="cta2" id="et-import">Import</button></div></div>';
+    g('et-add').addEventListener('click', showAddDisk);
+    g('et-import').addEventListener('click', importCatalog);
+    return;
+  }
+  const rows = [];
+  for (const disk of sorted()) {
+    rows.push(diskRow(disk));
+    if (expanded.has(disk.id)) childRows(rows, disk.tree || [], disk, 1, disk.id);
+  }
+  body.innerHTML = rows.join('');
+  // NOTE: events are wired once in wireButtons() via delegation on #tree-wrap,
+  // which is a stable parent that survives tree-body innerHTML replacements.
+}
+
+function pctN(d) { const t=pgb(d.total),f=pgb(d.free); return t&&f?Math.min(100,Math.round((t-f)/t*100)):0; }
+function fcC(p)  { return p>=90?'fc90':p>=80?'fc80':p>=50?'fc50':'fc0'; }
+
+function diskRow(disk) {
+  const p=pctN(disk), exp=expanded.has(disk.id);
+  const sel=selected?.type==='disk'&&selected.disk.id===disk.id;
+  const freeCol=pgb(disk.free)<10?'var(--re)':pgb(disk.free)<50?'var(--ye)':'var(--gr)';
+  return `<div class="tr disk-row${sel?' sel':''}" data-type="disk" data-did="${disk.id}">
+    <div class="tr-tog">${exp?'▾':'▶'}</div>
+    <div class="tr-ic vol-svg">${volSvg(diskIconName(disk))}</div>
+    <div class="tr-nm disk">${esc(disk.label)}</div>
+    <div class="dfill-wrap"><div class="dfill-txt">${esc(disk.total||'?')}</div><div class="dfill-bar"><div class="dfill-in ${fcC(p)}" style="width:${p}%"></div></div></div>
+    <div class="tr-fr" style="color:${freeCol}">${esc(disk.free||'?')}</div>
+    <div class="tr-kd">disk</div>
+    <div class="tr-dt">${disk.scanned?disk.scanned.slice(0,10):''}</div>
+    <div class="tr-nt">${esc(disk.note||'')}</div>
+  </div>`;
+}
+
+function childRows(rows, nodes, disk, depth, parentKey) {
+  if (!nodes || !nodes.length) return;
+  for (const n of nodes) {
+    const isDir = n.type === 'dir';
+    // Unique key = full path from disk root. Two folders with the same name
+    // under different parents get different keys.
+    const key   = parentKey + '/' + n.name;
+    const exp   = expanded.has(key);
+    const sel   = selected?.type === 'node' && selected.key === key;
+    const icon  = isDir ? (exp ? '📂' : '📁') : fileIcon(n.name);
+    const pad   = 4 + depth * 16;
+    rows.push(
+      '<div class="tr' + (sel ? ' sel' : '') + '"' +
+      ' data-type="node"' +
+      ' data-did="' + disk.id + '"' +
+      ' data-key="' + esc(key) + '"' +
+      (isDir ? '' : ' data-file="1"') +
+      ' style="padding-left:' + pad + 'px">' +
+      '<div class="tr-tog">' + (isDir ? '<span data-tog="1">' + (exp ? '▾' : '▶') + '</span>' : '') + '</div>' +
+      '<div class="tr-ic">' + icon + '</div>' +
+      '<div class="tr-nm">' + esc(n.name) + '</div>' +
+      '<div class="tr-sz">' + (n.size ? fmtB(n.size) : '') + '</div>' +
+      '<div class="tr-fr"></div>' +
+      '<div class="tr-kd">' + (isDir ? 'folder' : 'file') + '</div>' +
+      '<div class="tr-dt">' + (n.modified || '') + '</div>' +
+      '<div class="tr-nt"></div>' +
+      '</div>'
+    );
+    if (isDir && exp && n.children && n.children.length) {
+      childRows(rows, n.children, disk, depth + 1, key);
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════
+   EXPAND / SELECT
+════════════════════════════════════════════════ */
+function togExp(key) {
+  if (expanded.has(key)) expanded.delete(key); else expanded.add(key);
+  renderTree();
+}
+
+function selDisk(id) {
+  const disk = DB.disks.find(d => d.id === id);
+  if (!disk) return;
+  selected = { type: 'disk', disk };
+  // Update selection highlight without full re-render
+  highlightSelected();
+  updateInsp();
+  updateSB();
+  updatePathBar();
+}
+
+function selNode(diskId, key) {
+  const disk = DB.disks.find(d => d.id === diskId);
+  // key = disk.id + '/' + name1 + '/' + name2 ... — walk the path
+  const segs = key.split('/').slice(1); // drop disk.id prefix
+  let nodes = disk?.tree || [];
+  let node = null;
+  for (let i = 0; i < segs.length; i++) {
+    node = nodes.find(n => n.name === segs[i]);
+    if (!node) break;
+    nodes = node.children || [];
+  }
+  selected = { type: 'node', disk, node, key };
+  highlightSelected();
+  updateInsp();
+  updateSB();
+  updatePathBar();
+}
+
+function updatePathBar() {
+  const bar = g('pathbar');
+  if (!selected) { bar.classList.remove('on'); bar.innerHTML = ''; return; }
+  if (selected.type === 'disk') {
+    bar.innerHTML = '<span class="pb-ic">🖥</span><span class="pb-disk">' + esc(selected.disk.label) + '</span>';
+    bar.classList.add('on');
+    return;
+  }
+  const segs = selected.key.split('/').slice(1);
+  let html = '<span class="pb-ic">🖥</span><span class="pb-disk">' + esc(selected.disk.label) + '</span>';
+  segs.forEach((s, i) => {
+    const last = i === segs.length - 1;
+    html += '<span class="pb-sep">›</span><span class="pb-seg' + (last ? ' last' : '') + '">' + esc(s) + '</span>';
+  });
+  bar.innerHTML = html;
+  bar.classList.add('on');
+}
+
+function highlightSelected() {
+  // Just toggle .sel class on rows — no DOM rebuild needed
+  document.querySelectorAll('#tree-body .tr.sel').forEach(r => r.classList.remove('sel'));
+  if (!selected) return;
+  const rows = document.querySelectorAll('#tree-body .tr');
+  for (const row of rows) {
+    if (selected.type === 'disk' && row.dataset.type === 'disk' && row.dataset.did === selected.disk?.id) {
+      row.classList.add('sel'); break;
+    }
+    if (selected.type === 'node' && row.dataset.key === selected.key) {
+      row.classList.add('sel'); break;
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════
+   INSPECTOR
+════════════════════════════════════════════════ */
+function updateInsp() {
+  const body = g('ib');
+  if (!inspOpen || !body) return;
+  if (!selected) { body.innerHTML='<div class="ie"><span style="font-size:28px;opacity:.15">☰</span>Select an item</div>'; return; }
+
+  if (selected.type === 'disk') {
+    const d=selected.disk, p=pctN(d), fc=fcC(p);
+    const freeCol=pgb(d.free)<10?'var(--re)':pgb(d.free)<50?'var(--ye)':'var(--gr)';
+    body.innerHTML=`
+      <div class="ithumb vol-svg-lg">${volSvg(diskIconName(d))}</div>
+      <div class="is">
+        <div class="ist">General</div>
+        <div class="ir"><span class="ik">Name</span><input class="iv-e" id="in-name" value="${esc(d.label)}" /></div>
+        <div class="ir"><span class="ik">Kind</span><span class="iv">disk</span></div>
+        <div class="ir"><span class="ik">Model</span><span class="iv">${esc(d.model||'—')}</span></div>
+        <div class="ir"><span class="ik">Serial</span><span class="iv">${esc(d.serial||'—')}</span></div>
+        <div class="ir"><span class="ik">Interface</span><span class="iv">${esc(d.iface||'—')}</span></div>
+        <div class="ir"><span class="ik">Files</span><span class="iv">${(d.file_count||0).toLocaleString()}</span></div>
+        <div class="ir"><span class="ik">Scanned</span><span class="iv">${d.scanned?d.scanned.slice(0,10):'—'}</span></div>
+      </div>
+      <div class="is">
+        <div class="ist">Storage</div>
+        <div class="ir"><span class="ik">Total</span><span class="iv v">${esc(d.total||'—')}</span></div>
+        <div class="ir"><span class="ik">Free</span><span class="iv" style="color:${freeCol}">${esc(d.free||'—')}</span></div>
+        <div class="ir"><span class="ik">Used</span><span class="iv">${p}%</span></div>
+        <div class="ibar"><div class="ibfi ${fc}" style="width:${p}%"></div></div>
+      </div>
+      <div class="is">
+        <div class="ist">Comments</div>
+        <textarea class="inta" id="in-note" placeholder="Add a note…">${esc(d.note||'')}</textarea>
+        <button class="insv" id="btn-save-note">Save Note</button>
+      </div>`;
+    g('in-name').addEventListener('blur',  () => saveName(d.id));
+    g('in-name').addEventListener('keydown', e => { if(e.key==='Enter') e.target.blur(); });
+    g('btn-save-note').addEventListener('click', () => saveNote(d.id));
+  } else {
+    const n=selected.node;
+    if (!n) { body.innerHTML='<div class="ie"><span style="font-size:28px;opacity:.15">☰</span>Select an item</div>'; return; }
+    const isDir=n.type==='dir', ext=isDir?'':(n.name.split('.').pop()||'').toLowerCase();
+    body.innerHTML=`
+      <div class="ithumb">${isDir?'📁':fileIcon(n.name)}</div>
+      <div class="is">
+        <div class="ist">General</div>
+        <div class="ir"><span class="ik">Name</span><span class="iv">${esc(n.name)}</span></div>
+        <div class="ir"><span class="ik">Kind</span><span class="iv">${isDir?'folder':typeStr(ext)}</span></div>
+        ${n.size?`<div class="ir"><span class="ik">Size</span><span class="iv v">${fmtB(n.size)}</span></div>`:''}
+        ${isDir&&n.children?`<div class="ir"><span class="ik">Items</span><span class="iv">${n.children.length}</span></div>`:''}
+        ${ext?`<div class="ir"><span class="ik">Extension</span><span class="iv">.${ext}</span></div>`:''}
+        <div class="ir"><span class="ik">Modified</span><span class="iv">${esc(n.modified||'—')}</span></div>
+        <div class="ir"><span class="ik">Disk</span><span class="iv v">${esc(selected.disk.label)}</span></div>
+      </div>`;
+  }
+}
+
+async function saveName(diskId) {
+  const d=DB.disks.find(x=>x.id===diskId); if(!d)return;
+  const v=g('in-name')?.value.trim();
+  if(v&&v!==d.label){d.label=v;await save();renderTree();toast('Renamed.','ok');}
+}
+async function saveNote(diskId) {
+  const d=DB.disks.find(x=>x.id===diskId); if(!d)return;
+  d.note=g('in-note')?.value||'';
+  await save(); renderTree(); toast('Note saved.','ok');
+}
+function toggleInspector() {
+  inspOpen=!inspOpen;
+  g('insp').classList.toggle('col',!inspOpen);
+}
+
+/* ════════════════════════════════════════════════
+   ADD DISK
+════════════════════════════════════════════════ */
+async function showAddDisk() {
+  pendingVol = null;
+  ['add-label','add-note','add-model','add-serial','add-total','add-free'].forEach(id=>{g(id).value='';});
+  g('btn-confirm-add').disabled = true;
+  g('btn-confirm-add').textContent = '▶ Scan & Add';
+  g('btn-confirm-add').classList.remove('is-update');
+  g('scan-prog').style.display = 'none';
+  g('sp-fill').style.width = '0%';
+  g('add-modal').style.display = 'flex';
+  await refreshVols();
+}
+function hideAddDisk() { g('add-modal').style.display = 'none'; }
+
+async function refreshVols() {
+  const list = g('vol-list');
+  list.innerHTML = '<div style="padding:16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dm);">Detecting volumes…</div>';
+  try {
+    const vols = await window.archivo.listVolumes();
+    if (!vols.length) {
+      list.innerHTML = '<div style="padding:16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dm);">No volumes detected.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    const filtered = vols.filter(v => {
+      if (hideSystem  && v.vol_type === 'system')  return false;
+      if (hideNetwork && v.vol_type === 'network') return false;
+      return true;
+    });
+    if (!filtered.length) {
+      list.innerHTML = '<div style="padding:12px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dm);">No volumes match the current filters.</div>';
+      return;
+    }
+    filtered.forEach((v, i) => {
+      const p = v.total_bytes > 0 ? Math.round((v.total_bytes - v.free_bytes) / v.total_bytes * 100) : 0;
+      const fc = p>=90?'fc90':p>=80?'fc80':p>=50?'fc50':'fc0';
+      const el = document.createElement('div');
+      el.className = 'vol-item';
+      const vico = volIcon(v);
+      const archived = findExistingDisk('', v.name); // match by name (auto)
+      if (archived) el.classList.add('archived');
+      el.innerHTML = `
+        <div class="vol-ic vol-svg-md">${volSvg(vico)}</div>
+        <div class="vol-info">
+          <div class="vol-name">${esc(v.name)}${archived ? '<span class="vol-badge">Already archived</span>' : ''}</div>
+          <div class="vol-meta">${esc(v.mount_point)} · ${v.file_system||''}</div>
+        </div>
+        <div class="vol-right">
+          <div class="vol-free">${fmtB(v.free_bytes)} free</div>
+          <div class="vol-total">${fmtB(v.total_bytes)}</div>
+          <div class="vol-bar"><div class="vol-bfi ${fc}" style="width:${p}%"></div></div>
+        </div>`;
+      el.addEventListener('click', () => selectVol(el, v));
+      list.appendChild(el);
+    }); // end filtered.forEach
+  } catch(e) {
+    list.innerHTML = `<div style="padding:16px;font-family:var(--mono);font-size:10px;color:var(--re);">Error: ${e}</div>`;
+  }
+}
+
+async function selectVol(el, vol) {
+  document.querySelectorAll('.vol-item').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel');
+  pendingVol = vol;
+  g('add-label').value  = vol.name;
+  g('add-total').value  = fmtB(vol.total_bytes);
+  g('add-free').value   = fmtB(vol.free_bytes);
+  g('add-model').value  = 'Detecting…';
+  g('add-serial').value = 'Detecting…';
+  g('btn-confirm-add').disabled = false;
+  // If this volume is already archived, reflect it on the confirm button.
+  const archived = findExistingDisk('', vol.name);
+  if (archived) {
+    g('btn-confirm-add').textContent = '🔄 Update existing';
+    g('btn-confirm-add').classList.add('is-update');
+  } else {
+    g('btn-confirm-add').textContent = '▶ Scan & Add';
+    g('btn-confirm-add').classList.remove('is-update');
+  }
+  try {
+    const hw = await window.archivo.getDiskInfo(vol.mount_point);
+    g('add-model').value  = hw.model  || '—';
+    g('add-serial').value = hw.serial || '—';
+  } catch { g('add-model').value = '—'; g('add-serial').value = '—'; }
+}
+
+let scanInProgress = false;
+
+function fmtETA(sec) {
+  if (!sec || sec <= 0) return '';
+  if (sec < 60) return '~' + sec + 's remaining';
+  const m = Math.floor(sec / 60), s = sec % 60;
+  if (m < 60) return '~' + m + 'm ' + s + 's remaining';
+  const h = Math.floor(m / 60);
+  return '~' + h + 'h ' + (m % 60) + 'm remaining';
+}
+
+function updateScanProgress(p) {
+  if (p.cancelled) {
+    g('sp-stat').textContent = 'Cancelled.';
+    g('sp-pct').textContent = '';
+    g('sp-eta').textContent = '';
+    return;
+  }
+  if (p.phase === 'counting') {
+    g('sp-stat').textContent = p.files ? 'Counting… ' + p.files.toLocaleString() : 'Counting files…';
+    g('sp-pct').textContent  = '';
+    g('sp-eta').textContent  = '';
+    g('sp-fill').style.width = '0%';
+    return;
+  }
+  // Indeterminate (huge volume — total unknown)
+  if (p.pct === -1) {
+    g('sp-stat').textContent = (p.files || 0).toLocaleString() + ' files scanned';
+    g('sp-pct').textContent  = '';
+    g('sp-eta').textContent  = 'Large volume · estimating not available';
+    g('sp-fill').style.width = '100%';
+    g('sp-fill').style.opacity = '0.4';
+    if (p.path) g('sp-det').textContent = p.path;
+    return;
+  }
+  g('sp-fill').style.opacity = '1';
+  const pct = p.pct != null ? p.pct : 0;
+  g('sp-fill').style.width = pct + '%';
+  g('sp-pct').textContent  = pct + '%';
+  g('sp-stat').textContent = p.done ? 'Done.' : (p.files || 0).toLocaleString() + ' / ' + (p.total || 0).toLocaleString() + ' files';
+  g('sp-eta').textContent  = p.done ? '' : fmtETA(p.eta);
+  if (p.path) g('sp-det').textContent = p.path;
+}
+
+async function confirmAddDisk() {
+  if (!pendingVol) { toast('Select a volume first.','err'); return; }
+  const label = g('add-label').value.trim();
+  if (!label)     { toast('Label required.','err'); return; }
+  scanInProgress = true;
+  g('scan-prog').style.display = 'block';
+  g('btn-confirm-add').disabled = true;
+  g('btn-cancel-add').disabled  = true;
+  g('sp-fill').style.width = '0%';
+  g('sp-pct').textContent = '0%';
+  g('sp-stat').textContent = 'Counting files…';
+  g('sp-eta').textContent = '';
+  try {
+    const res = await window.archivo.scanVolume(pendingVol.mount_point);
+    scanInProgress = false;
+    if (res.cancelled) {
+      g('scan-prog').style.display = 'none';
+      g('btn-confirm-add').disabled = false;
+      g('btn-cancel-add').disabled  = false;
+      toast('Scan cancelled.', 'info');
+      return;
+    }
+    const scanData = {
+      label,
+      model:      g('add-model').value,
+      serial:     g('add-serial').value,
+      total:      g('add-total').value,
+      free:       g('add-free').value,
+      iface:      pendingVol.file_system||'',
+      note:       g('add-note').value.trim(),
+      file_count: res.fileCount,
+      tree:       res.tree,
+    };
+
+    // ── Duplicate detection: match by serial (if present) else by label ──
+    const existing = findExistingDisk(scanData.serial, scanData.label);
+
+    if (existing) {
+      // Re-enable buttons under the modal; ask the user what to do
+      g('scan-prog').style.display = 'none';
+      g('btn-confirm-add').disabled = false;
+      g('btn-cancel-add').disabled  = false;
+      const matchReason = (scanData.serial && existing.serial && scanData.serial === existing.serial)
+        ? 'same serial number'
+        : 'same label';
+      showModal('Disk already in catalog',
+        '<strong>' + esc(existing.label) + '</strong> is already in your catalog (' + matchReason + ').<br><br>' +
+        'Update it with the new scan (' + res.fileCount.toLocaleString() + ' files), or add a separate entry?',
+        [
+          { label:'Cancel',     cls:'btn-g', fn:hideModal },
+          { label:'Add anyway', cls:'btn-g', fn:()=>{ hideModal(); commitNewDisk(scanData, res.fileCount); } },
+          { label:'Update',     cls:'btn-p', fn:()=>{ hideModal(); commitUpdateDisk(existing, scanData, res.fileCount); } },
+        ]);
+      return;
+    }
+
+    commitNewDisk(scanData, res.fileCount);
+  } catch(e) {
+    scanInProgress = false;
+    g('scan-prog').style.display='none';
+    g('btn-confirm-add').disabled=false;
+    g('btn-cancel-add').disabled=false;
+    toast('Scan error: '+e,'err');
+  }
+}
+
+// Find a disk already in the catalog matching this scan.
+// Priority: serial number (most reliable) when both have one; otherwise label.
+function findExistingDisk(serial, label) {
+  const s = (serial || '').trim();
+  if (s) {
+    const bySerial = DB.disks.find(d => (d.serial || '').trim() && (d.serial || '').trim() === s);
+    if (bySerial) return bySerial;
+  }
+  const l = (label || '').trim().toLowerCase();
+  return DB.disks.find(d => (d.label || '').trim().toLowerCase() === l) || null;
+}
+
+function commitNewDisk(scanData, fileCount) {
+  const disk = {
+    id:         'disk_'+Date.now(),
+    label:      scanData.label,
+    model:      scanData.model,
+    serial:     scanData.serial,
+    total:      scanData.total,
+    free:       scanData.free,
+    iface:      scanData.iface,
+    note:       scanData.note,
+    scanned:    new Date().toISOString(),
+    file_count: fileCount,
+    tree:       scanData.tree,
+  };
+  DB.disks.push(disk);
+  save();
+  hideAddDisk();
+  expanded.add(disk.id);
+  refreshAll();
+  selDisk(disk.id);
+  toast('"'+disk.label+'" added — '+fileCount.toLocaleString()+' files.','ok');
+}
+
+function commitUpdateDisk(existing, scanData, fileCount) {
+  // Keep the same id (preserves selection/expansion history). Keep the
+  // existing note unless the user typed a new one in the Add Disk form.
+  existing.label      = scanData.label;
+  existing.model      = scanData.model      || existing.model;
+  existing.serial     = scanData.serial     || existing.serial;
+  existing.total      = scanData.total;
+  existing.free       = scanData.free;
+  existing.iface      = scanData.iface      || existing.iface;
+  existing.note       = scanData.note       || existing.note;
+  existing.scanned    = new Date().toISOString();
+  existing.file_count = fileCount;
+  existing.tree       = scanData.tree;
+  save();
+  hideAddDisk();
+  expanded.add(existing.id);
+  refreshAll();
+  selDisk(existing.id);
+  toast('"'+existing.label+'" updated — '+fileCount.toLocaleString()+' files.','ok');
+}
+
+/* ────────────────────────────────────────────────
+   UPDATE AN ARCHIVED DISK FROM THE MOUNTED VOLUME
+   Match is automatic by name (label) only.
+──────────────────────────────────────────────── */
+async function ctxUpdate() {
+  g('ctx').style.display = 'none';
+  if (ctxTarget?.type !== 'disk') return;
+  const disk = DB.disks.find(d => d.id === ctxTarget.diskId);
+  if (!disk) return;
+  await tryUpdateArchivedDisk(disk);
+}
+
+// Look for a mounted volume whose name/label matches the archived disk (by name only).
+async function findMountedVolumeFor(disk) {
+  let vols = [];
+  try { vols = await window.archivo.listVolumes(); } catch { vols = []; }
+  const target = (disk.label || '').trim().toLowerCase();
+  return vols.find(v =>
+    (v.name || '').trim().toLowerCase() === target ||
+    (v.mount_point || '').split(/[\\/]/).filter(Boolean).pop()?.toLowerCase() === target
+  ) || null;
+}
+
+async function tryUpdateArchivedDisk(disk) {
+  const vol = await findMountedVolumeFor(disk);
+  if (!vol) {
+    // Volume not mounted → ask the user to connect it, offer Retry.
+    showModal('Volume not mounted',
+      'To update <strong>' + esc(disk.label) + '</strong>, connect and mount the drive named ' +
+      '<strong>' + esc(disk.label) + '</strong>, then click Retry.<br><br>' +
+      '<span style="color:var(--dm);font-size:12px;">archivo matches the mounted volume by name.</span>',
+      [
+        { label:'Cancel', cls:'btn-g', fn:hideModal },
+        { label:'Retry',  cls:'btn-p', fn:async()=>{ hideModal(); await tryUpdateArchivedDisk(disk); } },
+      ]);
+    return;
+  }
+  // Volume is mounted → scan it and update the existing entry.
+  runUpdateScan(disk, vol);
+}
+
+// Scan a mounted volume and replace the archived disk's tree (keeps id + note).
+async function runUpdateScan(disk, vol) {
+  // Open the Add Disk modal purely to reuse its progress UI.
+  await showAddDisk();
+  pendingVol = vol;
+  g('add-label').value  = disk.label;
+  g('add-total').value  = fmtB(vol.total_bytes);
+  g('add-free').value   = fmtB(vol.free_bytes);
+  g('add-model').value  = disk.model  || '—';
+  g('add-serial').value = disk.serial || '—';
+  g('add-note').value   = disk.note   || '';
+  g('scan-prog').style.display = 'block';
+  g('btn-confirm-add').disabled = true;
+  g('btn-cancel-add').disabled  = true;
+  g('sp-fill').style.width = '0%';
+  g('sp-pct').textContent = '0%';
+  g('sp-stat').textContent = 'Counting files…';
+  g('sp-eta').textContent = '';
+  scanInProgress = true;
+  try {
+    const res = await window.archivo.scanVolume(vol.mount_point);
+    scanInProgress = false;
+    if (res.cancelled) { hideAddDisk(); toast('Update cancelled.', 'info'); return; }
+    const scanData = {
+      label:  disk.label,
+      model:  disk.model,
+      serial: disk.serial,
+      total:  fmtB(vol.total_bytes),
+      free:   fmtB(vol.free_bytes),
+      iface:  vol.file_system || disk.iface,
+      note:   '', // keep the existing note (commitUpdateDisk preserves it when empty)
+      tree:   res.tree,
+    };
+    commitUpdateDisk(disk, scanData, res.fileCount);
+  } catch(e) {
+    scanInProgress = false;
+    hideAddDisk();
+    toast('Update error: ' + e, 'err');
+  }
+}
+
+async function cancelScan() {
+  if (!scanInProgress) return;
+  await window.archivo.cancelScan();
+  g('sp-stat').textContent = 'Cancelling…';
+}
+
+/* ════════════════════════════════════════════════
+   DELETE
+════════════════════════════════════════════════ */
+function deleteSelected() {
+  if (!selected||selected.type!=='disk') { toast('Select a disk first.','err'); return; }
+  const d=selected.disk;
+  showModal('Remove Disk','Remove <strong>'+d.label+'</strong>?<br>The physical disk is not affected.',[
+    {label:'Cancel',cls:'btn-g',fn:hideModal},
+    {label:'Remove',cls:'btn-r',fn:async()=>{
+      DB.disks=DB.disks.filter(x=>x.id!==d.id);
+      expanded.delete(d.id); selected=null;
+      await save(); refreshAll(); hideModal();
+      toast('"'+d.label+'" removed.','ok');
+    }},
+  ]);
+}
+
+/* ════════════════════════════════════════════════
+   SEARCH
+════════════════════════════════════════════════ */
+function buildIndex() {
+  srchIndex=[];
+  DB.disks.forEach(disk=>{
+    srchIndex.push({disk,node:null,path:disk.label,pp:[]});
+    const stack=[{nodes:disk.tree||[],pfx:disk.label,pp:[]}];
+    while(stack.length){
+      const{nodes,pfx,pp}=stack.pop();
+      for(const n of nodes){
+        const fp=pfx+'/'+n.name, np=[...pp,n.name];
+        srchIndex.push({disk,node:n,path:fp,pp:np});
+        if(n.children&&n.children.length) stack.push({nodes:n.children,pfx:fp,pp:np});
+      }
+    }
+  });
+}
+
+function onSearch(q) {
+  clearTimeout(srchTimer);
+  g('search-clear').style.display = q.trim() ? 'inline' : 'none';
+  if (!q.trim() || q.trim().length < 2) {
+    // Too short — just hide results panel, but DO NOT touch the input value
+    g('srch-panel').classList.remove('on');
+    g('tree-scroll').style.display = '';
+    g('sc').textContent = '';
+    return;
+  }
+  srchTimer = setTimeout(() => execSearch(q), 150);
+}
+
+function execSearch(q) {
+  const ql=q.trim().toLowerCase();
+  g('tree-scroll').style.display='none';
+  g('srch-panel').classList.add('on');
+  const filt=srchIndex.filter(r=>{
+    const nm=(r.node?r.node.name:r.disk.label).toLowerCase();
+    if(!nm.includes(ql))return false;
+    if(srchFilter==='all')return true;
+    if(!r.node)return false;
+    const ext=(r.node.name.split('.').pop()||'').toLowerCase();
+    if(srchFilter==='folder') return r.node.type==='dir';
+    if(srchFilter==='video')  return V.has(ext);
+    if(srchFilter==='image')  return I.has(ext);
+    if(srchFilter==='audio')  return A.has(ext);
+    if(srchFilter==='archive')return AR.has(ext);
+    if(srchFilter==='doc')    return D.has(ext);
+    return true;
+  });
+  const shown=filt.slice(0,600), cap=filt.length>600;
+  g('sc').textContent=cap?filt.length+' results (showing 600)':filt.length+' result'+(filt.length!==1?'s':'');
+  const byDisk={};
+  shown.forEach(r=>{const k=r.disk.id;if(!byDisk[k])byDisk[k]={disk:r.disk,items:[]};byDisk[k].items.push(r);});
+  g('srch-list').innerHTML=Object.values(byDisk).map(grp=>{
+    const rows=grp.items.map(r=>{
+      const nm=r.node?r.node.name:r.disk.label;
+      const ic=!r.node?'🖥':r.node.type==='dir'?'📁':fileIcon(r.node.name);
+      const hl=esc(nm).replace(new RegExp('('+escRe(q.trim())+')','gi'),'<em>$1</em>');
+      const sz=r.node&&r.node.size?fmtB(r.node.size):'';
+      const dt=r.node?(r.node.modified||''):(r.disk.scanned||'').slice(0,10);
+      return`<div class="sr" data-did="${r.disk.id}" data-pp='${JSON.stringify(r.pp)}' data-nm="${esc(nm)}">
+        <div class="sr-ic">${ic}</div><div class="sr-nm">${hl}</div>
+        <div class="sr-dk">${esc(grp.disk.label)}</div>
+        <div class="sr-pt">${esc(r.path)}</div>
+        <div class="sr-sz">${sz}</div><div class="sr-dt">${dt}</div>
+      </div>`;
+    }).join('');
+    return`<div class="sr-grp">📀 ${esc(grp.disk.label)} · ${grp.items.length}</div>${rows}`;
+  }).join('');
+  // Wire search result clicks
+  g('srch-list').querySelectorAll('.sr').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const pp=JSON.parse(el.dataset.pp||'[]');
+      goTo(el.dataset.did, pp, el.dataset.nm);
+    });
+  });
+}
+
+function clearSearch() {
+  g('search-inp').value='';
+  g('search-clear').style.display='none';
+  g('srch-panel').classList.remove('on');
+  g('tree-scroll').style.display='';
+  g('sc').textContent='';
+}
+
+function goTo(diskId, pp, name) {
+  clearSearch();
+  const disk=DB.disks.find(d=>d.id===diskId); if(!disk)return;
+  expanded.add(disk.id);
+  let nodes=disk.tree||[];
+  let key = disk.id;
+  for(let i=0;i<pp.length-1;i++){
+    const t=pp[i], nd=nodes.find(n=>n.name===t);
+    if(!nd)break;
+    key = key + '/' + t;
+    expanded.add(key);
+    nodes=nd.children||[];
+  }
+  renderTree();
+  setTimeout(()=>{
+    const rows=g('tree-body').querySelectorAll('.tr');
+    for(const row of rows){
+      const nm=row.querySelector('.tr-nm');
+      if(nm&&nm.textContent.trim()===name){
+        row.classList.add('sel');
+        row.scrollIntoView({behavior:'smooth',block:'center'});
+        break;
+      }
+    }
+  },60);
+}
+
+/* ════════════════════════════════════════════════
+   CONTEXT MENU
+════════════════════════════════════════════════ */
+function showCtx(e, type, diskId, key) {
+  e.preventDefault(); e.stopPropagation();
+  ctxTarget={type, diskId, key};
+  const isDisk=type==='disk';
+  g('ctx-update').style.display     = isDisk?'':'none';
+  g('ctx-sep-upd').style.display    = isDisk?'':'none';
+  g('ctx-rename').style.display = isDisk?'':'none';
+  g('ctx-note').style.display   = isDisk?'':'none';
+  g('ctx-sep').style.display    = isDisk?'':'none';
+  g('ctx-del').style.display    = isDisk?'':'none';
+  const ctx=g('ctx');
+  ctx.style.display='block';
+  ctx.style.left=Math.min(e.clientX,window.innerWidth-210)+'px';
+  ctx.style.top=Math.min(e.clientY,window.innerHeight-210)+'px';
+}
+function ctxRename() {
+  if(ctxTarget?.type!=='disk')return;
+  selDisk(ctxTarget.diskId);
+  setTimeout(()=>{const el=g('in-name');if(el){if(!inspOpen)toggleInspector();el.focus();el.select();}},80);
+}
+function ctxNote() {
+  if(ctxTarget?.type!=='disk')return;
+  selDisk(ctxTarget.diskId);
+  setTimeout(()=>{const el=g('in-note');if(el){if(!inspOpen)toggleInspector();el.focus();}},80);
+}
+function ctxReveal() { toast('Connect the disk to reveal in Finder.','info'); }
+function ctxOpen()   { toast('Connect the disk to open.','info'); }
+function ctxDelete() { if(ctxTarget?.type==='disk'){selDisk(ctxTarget.diskId);deleteSelected();} }
+
+/* ════════════════════════════════════════════════
+   STATUS BAR
+════════════════════════════════════════════════ */
+function updateSB() {
+  let files=0,bytes=0;
+  DB.disks.forEach(d=>{files+=(d.file_count||0);bytes+=pgb(d.total)*1073741824;});
+  g('sb-tot').textContent=files.toLocaleString()+' items · '+DB.disks.length+' disk'+(DB.disks.length!==1?'s':'')+' · '+fmtB(bytes);
+  if(selected){
+    const n=selected.type==='disk'?selected.disk.label:(selected.node?.name||'—');
+    g('sb-sel').textContent='"'+n+'" selected';
+  } else {
+    g('sb-sel').textContent='No selection';
+  }
+}
+
+/* ════════════════════════════════════════════════
+   MODAL
+════════════════════════════════════════════════ */
+function showModal(t,b,actions) {
+  g('mt').textContent=t;
+  g('mb').innerHTML=b;
+  const ma=g('ma'); ma.innerHTML='';
+  actions.forEach(a=>{
+    const btn=document.createElement('button');
+    btn.className=a.cls; btn.textContent=a.label;
+    btn.addEventListener('click',a.fn);
+    ma.appendChild(btn);
+  });
+  g('mw').style.display='flex';
+}
+function hideModal() { g('mw').style.display='none'; }
+
+/* ════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════ */
+function toast(msg,type='') {
+  const el=document.createElement('div');
+  el.className='toast '+(type||'');
+  el.textContent=msg;
+  g('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+
+/* ════════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════════ */
+
+function volIcon(v) {
+  if (!v) return 'unknown';
+  if (v.vol_type === 'network') return 'network';
+  if (v.vol_type === 'system')  return 'system';
+  if (v.vol_type === 'usb')     return 'USB';
+  return 'unknown';
+}
+function diskIconName(disk) {
+  // Catalogued disk: derive icon from vol_type or iface; archive disks default to USB
+  if (disk.vol_type === 'network') return 'network';
+  if (disk.vol_type === 'system')  return 'system';
+  if (disk.vol_type === 'unknown') return 'unknown';
+  const ifc = (disk.iface || '').toLowerCase();
+  if (ifc.includes('network') || ifc.includes('smb') || ifc.includes('nfs') || ifc.includes('afp')) return 'network';
+  return 'USB';
+}
+function volEmoji(v) {
+  if (!v) return '💾';
+  if (v.vol_type === 'network') return '🌐';
+  if (v.vol_type === 'system')  return '🖥';
+  if (v.vol_type === 'usb')     return '💽';
+  return '💾';
+}
+
+// Inline SVG icons (line style, colour via currentColor). Mapping:
+//   USB/unknown → disk, system → OS, network → network
+const VOL_SVG = {
+  disk: '<svg viewBox="0 0 22 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9,13h0"/><path d="M1.2,8.6c-.1.3-.2.6-.2.9v5.5c0,1.1.9,2,2,2h16c1.1,0,2-.9,2-2v-5.5c0-.3,0-.6-.2-.9l-3.2-6.5c-.3-.7-1-1.1-1.8-1.1H6.2c-.8,0-1.5.4-1.8,1.1l-3.2,6.5Z"/><path d="M20.9,9H1.1"/><path d="M5,13h0"/></svg>',
+  OS:   '<svg viewBox="0 0 22 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.2,8.6c-.1.3-.2.6-.2.9v5.5c0,1.1.9,2,2,2h16c1.1,0,2-.9,2-2v-5.5c0-.3,0-.6-.2-.9l-3.2-6.5c-.3-.7-1-1.1-1.8-1.1H6.2c-.8,0-1.5.4-1.8,1.1l-3.2,6.5Z"/><path d="M20.9,9H1.1"/><rect x="4.5" y="10.6" width="3.3" height="1.9" rx=".9"/><rect x="3.8" y="13.5" width="4.7" height="1.9" rx=".9"/></svg>',
+  network: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>',
+};
+// Map a volume-type name to an SVG key
+function svgKeyFor(name) {
+  if (name === 'network') return 'network';
+  if (name === 'system')  return 'OS';
+  return 'disk'; // USB + unknown
+}
+function volSvg(name) {
+  return VOL_SVG[svgKeyFor(name)] || VOL_SVG.disk;
+}
+
+
+function g(id)   { return document.getElementById(id); }
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function pgb(s)  {
+  if(!s)return 0;
+  const m=String(s).match(/([\d.,]+)\s*(TB|GB|MB|B)?/i);
+  if(!m)return 0;
+  const v=parseFloat(m[1].replace(',','.')), u=(m[2]||'GB').toUpperCase();
+  return u==='TB'?v*1024:u==='MB'?v/1024:u==='B'?v/1073741824:v;
+}
+function fmtB(b) {
+  // Real catalogs (DiskCatalogMaker export) store sizes as preformatted
+  // strings like "66 KB" or "1,9 MB". Pass those through unchanged.
+  if (typeof b === 'string') {
+    const t = b.trim();
+    if (!t) return '';
+    // If it's a plain numeric string, convert; otherwise return as-is
+    if (/^\d+(\.\d+)?$/.test(t)) { b = parseFloat(t); }
+    else return t;
+  }
+  if (typeof b !== 'number' || !isFinite(b) || b <= 0) return '';
+  const u = ['B','KB','MB','GB','TB']; let i = 0;
+  while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+  return b.toFixed(i > 1 ? 1 : 0) + ' ' + u[i];
+}
+function esc(s)    { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escRe(s)  { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+function typeStr(ext){
+  if(V.has(ext)) return'Video ('+ext.toUpperCase()+')';
+  if(I.has(ext)) return'Image ('+ext.toUpperCase()+')';
+  if(A.has(ext)) return'Audio ('+ext.toUpperCase()+')';
+  if(AR.has(ext))return'Archive ('+ext.toUpperCase()+')';
+  if(D.has(ext)) return'Document ('+ext.toUpperCase()+')';
+  return ext?ext.toUpperCase()+' file':'file';
+}
+function fileIcon(name){
+  const ext=(name.split('.').pop()||'').toLowerCase();
+  if(V.has(ext)) return'🎬'; if(I.has(ext)) return'🖼';
+  if(A.has(ext)) return'🎵'; if(AR.has(ext))return'📦';
+  if(D.has(ext)) return'📄'; return'📝';
+}
+</script>
+</body>
+</html>
