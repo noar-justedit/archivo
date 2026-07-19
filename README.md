@@ -11,6 +11,21 @@ Built with Electron. Runs on macOS and Windows.
 
 ---
 
+## Screenshots
+
+The file-tree browser: catalogued disks, folders and files with size, kind and
+date columns, an inspector panel on the right, and a path bar showing where the
+selected file lives.
+
+![archivo browser](docs/screenshots/browser.png)
+
+Adding a disk: archivo lists your mounted volumes, flags the ones already in
+the catalog, and scans the selected drive with live progress.
+
+![Add disk to catalog](docs/screenshots/add-disk.png)
+
+---
+
 ## Features
 
 - Scan any mounted volume into a fast, browsable file index
