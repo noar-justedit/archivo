@@ -23,7 +23,7 @@ const fs     = require('fs');
 const os     = require('os');
 const zlib   = require('zlib');
 const https  = require('https');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 
 let mainWindow;
 
@@ -82,17 +82,22 @@ function createWindow() {
     minWidth: 900,
     minHeight:580,
     backgroundColor: '#0d0d11',
-    // macOS: hidden inset title bar with traffic lights over our custom bar.
-    // Windows/Linux: standard native frame (the OS draws min/max/close).
-    titleBarStyle: isMac ? 'hiddenInset' : 'default',
-    frame: isMac ? false : true,
-    ...(isMac ? { trafficLightPosition: { x: 14, y: 14 } } : {}),
+    // macOS: hidden inset title bar (traffic lights over our custom bar).
+    // Windows/Linux: standard native frame.
+    ...(isMac ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 14, y: 14 } } : {}),
     webPreferences: {
       nodeIntegration:  false,
       contextIsolation: true,
+      sandbox:          true,
       preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, '..', 'build', isMac ? 'icon.icns' : 'icon.ico')
+  });
+
+  // Security: never open popups; never navigate away from the local app file.
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  mainWindow.webContents.on('will-navigate', (e, url) => {
+    if (!url.startsWith('file://')) e.preventDefault();
   });
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
@@ -111,8 +116,7 @@ app.on('activate', () => {
 // ─────────────────────────────────────────────────────────────
 // CATALOG — stocké dans userData (même principe que Projecto)
 // ─────────────────────────────────────────────────────────────
-const CATALOG_FILE = path.join(app.getPath('userData'), 'archivo_catalog.json');
-const PREFS_FILE   = path.join(app.getPath('userData'), 'archivo_prefs.json');
+const PREFS_FILE = path.join(app.getPath('userData'), 'archivo_prefs.json');
 
 ipcMain.handle('app:version', () => app.getVersion());
 
@@ -127,21 +131,13 @@ ipcMain.handle('prefs:save', (_, prefs) => {
   } catch {}
   return true;
 });
-ipcMain.handle('shell:external', (_, url) => { try { shell.openExternal(url); } catch {} return true; });
-
-ipcMain.handle('catalog:load', () => {
-  if (!fs.existsSync(CATALOG_FILE)) return { disks: [] };
-  try { return JSON.parse(fs.readFileSync(CATALOG_FILE, 'utf8')); }
-  catch { return { disks: [] }; }
+ipcMain.handle('shell:external', (_, url) => {
+  try {
+    const u = new URL(String(url));
+    if (u.protocol === 'https:' || u.protocol === 'http:') shell.openExternal(u.toString());
+  } catch {}
+  return true;
 });
-
-ipcMain.handle('catalog:save', (_, catalog) => {
-  fs.mkdirSync(path.dirname(CATALOG_FILE), { recursive: true });
-  fs.writeFileSync(CATALOG_FILE, JSON.stringify(catalog, null, 2), 'utf8');
-  return CATALOG_FILE;
-});
-
-ipcMain.handle('catalog:path', () => CATALOG_FILE);
 
 ipcMain.handle('catalog:export', async (_, catalog) => {
   const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
@@ -250,11 +246,39 @@ function listVolumesMac() {
 }
 
 function listVolumesWin() {
+  // Preferred: PowerShell CIM with JSON output. Robust to commas in names,
+  // and works on Windows 11 24H2+ where wmic has been removed.
   try {
-    // DriveType: 2=removable, 3=local fixed, 4=network, 5=optical
+    const raw = execFileSync('powershell.exe',
+      ['-NoProfile','-Command',
+       'Get-CimInstance Win32_LogicalDisk | Select-Object Caption,FreeSpace,Size,FileSystem,VolumeName,DriveType | ConvertTo-Json'],
+      { encoding: 'utf8' });
+    let data = JSON.parse(raw);
+    if (!Array.isArray(data)) data = [data];
+    const vols = data.map(o => {
+      const total = parseInt(o.Size || '0'), free = parseInt(o.FreeSpace || '0');
+      if (!total) return null;
+      const dt = parseInt(o.DriveType || '0');
+      const caption = String(o.Caption || '').toUpperCase();
+      let volType = 'unknown';
+      if (dt === 4) volType = 'network';
+      else if (dt === 2) volType = 'usb';
+      else if (dt === 3) volType = (caption === 'C:') ? 'system' : 'unknown';
+      return {
+        name: String(o.VolumeName || o.Caption || ''),
+        mount_point: caption.endsWith('\\') ? caption : caption + '\\',
+        total_bytes: total, free_bytes: free,
+        file_system: String(o.FileSystem || ''),
+        removable: dt === 2,
+        vol_type: volType,
+      };
+    }).filter(Boolean);
+    if (vols.length) return vols;
+  } catch {}
+  // Fallback: wmic (older Windows only)
+  try {
     const raw   = execSync('wmic logicaldisk get Caption,FreeSpace,Size,FileSystem,VolumeName,DriveType /format:csv', { encoding: 'utf8' });
     const lines = raw.trim().split('\n').map(l => l.trim()).filter(Boolean);
-    // wmic CSV header line starts with "Node," — use it for column mapping
     const headerIdx = lines.findIndex(l => l.startsWith('Node,'));
     if (headerIdx < 0 || lines.length < headerIdx + 2) return [];
     const header = lines[headerIdx].split(',');
@@ -271,7 +295,7 @@ function listVolumesWin() {
       else if (dt === 3) volType = (caption === 'C:') ? 'system' : 'unknown';
       return {
         name: o['VolumeName'] || o['Caption'],
-        mount_point: o['Caption'].endsWith('\\') ? o['Caption'] : o['Caption'] + '\\',
+        mount_point: caption.endsWith('\\') ? caption : caption + '\\',
         total_bytes: total, free_bytes: free,
         file_system: o['FileSystem'] || '',
         removable: dt === 2,
@@ -287,18 +311,21 @@ function listVolumesWin() {
 ipcMain.handle('volumes:info', (_, mountPoint) => {
   if (process.platform === 'darwin') {
     try {
-      const raw    = execSync(`diskutil info "${mountPoint}" 2>/dev/null`, { encoding: 'utf8' });
-      const get    = key => { const m = raw.match(new RegExp(`${key}\\s*:\\s*(.+)`, 'i')); return m ? m[1].trim() : '—'; };
+      // execFileSync with an args array: no shell, no injection via volume names
+      const raw = execFileSync('diskutil', ['info', String(mountPoint)], { encoding: 'utf8' });
+      const get = key => { const m = raw.match(new RegExp(`${key}\\s*:\\s*(.+)`, 'i')); return m ? m[1].trim() : '—'; };
       return { model: get('Media Name'), serial: get('Media Serial Number'), iface: get('Protocol') };
     } catch { return { model: '—', serial: '—', iface: '—' }; }
   }
   if (process.platform === 'win32') {
     try {
-      const raw   = execSync('wmic diskdrive get Model,SerialNumber /format:csv', { encoding: 'utf8' });
-      const lines = raw.trim().split('\n').filter(l => l.includes(','));
-      if (lines.length > 1) {
-        const p = lines[1].split(',');
-        return { model: (p[1]||'').trim(), serial: (p[2]||'').trim(), iface: 'USB / SATA' };
+      const raw = execFileSync('powershell.exe',
+        ['-NoProfile','-Command','Get-CimInstance Win32_DiskDrive | Select-Object Model,SerialNumber | ConvertTo-Json'],
+        { encoding: 'utf8' });
+      let data = JSON.parse(raw);
+      if (!Array.isArray(data)) data = [data];
+      if (data.length) {
+        return { model: String(data[0].Model||'').trim(), serial: String(data[0].SerialNumber||'').trim(), iface: 'USB / SATA' };
       }
     } catch {}
   }
@@ -355,7 +382,7 @@ ipcMain.handle('volumes:scan', async (event, mountPoint) => {
   let countCheck = 0;
 
   async function countFiles(dirPath, depth) {
-    if (depth > 50 || scanCancelled || indeterminate) return;
+    if (depth > 128 || scanCancelled || indeterminate) return;
     let entries;
     try { entries = fs.readdirSync(dirPath, { withFileTypes: true }); } catch { return; }
     for (const e of entries) {
@@ -386,7 +413,7 @@ ipcMain.handle('volumes:scan', async (event, mountPoint) => {
   let lastEmit = 0;
 
   async function walk(dirPath, depth) {
-    if (depth > 50 || scanCancelled) return [];
+    if (depth > 128 || scanCancelled) return [];
     let entries;
     try { entries = fs.readdirSync(dirPath, { withFileTypes: true }); } catch { return []; }
     const nodes = [];

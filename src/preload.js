@@ -19,9 +19,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('archivo', {
-  loadCatalog:    ()       => ipcRenderer.invoke('catalog:load'),
-  saveCatalog:    catalog  => ipcRenderer.invoke('catalog:save', catalog),
-  catalogPath:    ()       => ipcRenderer.invoke('catalog:path'),
   exportCatalog:  (catalog) => ipcRenderer.invoke('catalog:export', catalog),
   importCatalog:  ()       => ipcRenderer.invoke('catalog:import'),
 

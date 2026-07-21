@@ -12,7 +12,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>archivo 1.0.4</title>
+<title>archivo 1.1.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -408,7 +408,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="wb">
     <img src="assets/app-icon.png" class="welcome-icon" alt="" />
     <div class="wt">archivo</div>
-    <div class="ws">v1.0.4 · Hard Disk Catalog</div>
+    <div class="ws">v1.1.0 · Hard Disk Catalog</div>
     <div class="wbtns">
       <button class="wbp" id="btn-load-db">📂 Open Database</button>
       <button class="wbg" id="btn-start-empty">Start empty catalog</button>
@@ -503,7 +503,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
 
 <!-- STATUS BAR -->
 <div id="sb">
-  <span class="sb-ver" id="sb-ver">v1.0.4</span>
+  <span class="sb-ver" id="sb-ver">v1.1.0</span>
   <a class="sb-link" id="sb-github">GitHub</a>
   <a class="sb-link" id="sb-about">About</a>
   <span style="color:var(--bd2)">|</span>
@@ -516,7 +516,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="about-card">
     <img src="assets/app-icon.png" class="about-icon" alt="" />
     <div class="about-name">archivo</div>
-    <div class="about-ver" id="about-ver">v1.0.4</div>
+    <div class="about-ver" id="about-ver">v1.1.0</div>
     <div class="about-desc">Catalogue your archive drives once, search them all offline.</div>
     <div class="about-gpl">
       Free software under the <strong>GNU General Public License v3</strong>.<br>
@@ -988,11 +988,6 @@ async function exportCatalog() {
 /* ════════════════════════════════════════════════
    SAVE
 ════════════════════════════════════════════════ */
-async function save() {
-  try { await window.archivo.saveCatalog(DB); }
-  catch(e) { toast('Save error: ' + e, 'err'); }
-}
-
 /* ════════════════════════════════════════════════
    REFRESH
 ════════════════════════════════════════════════ */
@@ -1228,12 +1223,12 @@ function updateInsp() {
 async function saveName(diskId) {
   const d=DB.disks.find(x=>x.id===diskId); if(!d)return;
   const v=g('in-name')?.value.trim();
-  if(v&&v!==d.label){d.label=v;await save();renderTree();toast('Renamed.','ok');}
+  if(v&&v!==d.label){d.label=v;renderTree();toast('Renamed.','ok');}
 }
 async function saveNote(diskId) {
   const d=DB.disks.find(x=>x.id===diskId); if(!d)return;
   d.note=g('in-note')?.value||'';
-  await save(); renderTree(); toast('Note saved.','ok');
+  renderTree(); toast('Note saved.','ok');
 }
 function toggleInspector() {
   inspOpen=!inspOpen;
@@ -1465,7 +1460,6 @@ function commitNewDisk(scanData, fileCount) {
     tree:       scanData.tree,
   };
   DB.disks.push(disk);
-  save();
   hideAddDisk();
   expanded.add(disk.id);
   refreshAll();
@@ -1486,7 +1480,6 @@ function commitUpdateDisk(existing, scanData, fileCount) {
   existing.scanned    = new Date().toISOString();
   existing.file_count = fileCount;
   existing.tree       = scanData.tree;
-  save();
   hideAddDisk();
   expanded.add(existing.id);
   refreshAll();
@@ -1593,7 +1586,7 @@ function deleteSelected() {
     {label:'Remove',cls:'btn-r',fn:async()=>{
       DB.disks=DB.disks.filter(x=>x.id!==d.id);
       expanded.delete(d.id); selected=null;
-      await save(); refreshAll(); hideModal();
+      refreshAll(); hideModal();
       toast('"'+d.label+'" removed.','ok');
     }},
   ]);
@@ -1660,7 +1653,7 @@ function execSearch(q) {
       const hl=esc(nm).replace(new RegExp('('+escRe(q.trim())+')','gi'),'<em>$1</em>');
       const sz=r.node&&r.node.size?fmtB(r.node.size):'';
       const dt=r.node?(r.node.modified||''):(r.disk.scanned||'').slice(0,10);
-      return`<div class="sr" data-did="${r.disk.id}" data-pp='${JSON.stringify(r.pp)}' data-nm="${esc(nm)}">
+      return`<div class="sr" data-did="${r.disk.id}" data-pp="${esc(JSON.stringify(r.pp))}" data-nm="${esc(nm)}">
         <div class="sr-ic">${ic}</div><div class="sr-nm">${hl}</div>
         <div class="sr-dk">${esc(grp.disk.label)}</div>
         <div class="sr-pt">${esc(r.path)}</div>
@@ -1858,7 +1851,7 @@ function fmtB(b) {
   while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
   return b.toFixed(i > 1 ? 1 : 0) + ' ' + u[i];
 }
-function esc(s)    { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s)    { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function escRe(s)  { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 function typeStr(ext){
   if(V.has(ext)) return'Video ('+ext.toUpperCase()+')';
