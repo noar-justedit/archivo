@@ -114,7 +114,9 @@ app.on('activate', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
-// CATALOG — stocké dans userData (même principe que Projecto)
+// PREFERENCES — small local file for app settings (e.g. dismissed
+// update notice). The catalog itself is never auto-saved here; it
+// only lives in the .archivo files the user explicitly saves.
 // ─────────────────────────────────────────────────────────────
 const PREFS_FILE = path.join(app.getPath('userData'), 'archivo_prefs.json');
 
@@ -182,7 +184,7 @@ ipcMain.handle('catalog:import', async () => {
 });
 
 // ─────────────────────────────────────────────────────────────
-// VOLUMES — df (macOS) / wmic (Windows)
+// VOLUMES — df (macOS) / PowerShell + wmic fallback (Windows)
 // ─────────────────────────────────────────────────────────────
 ipcMain.handle('volumes:list', () => {
   if (process.platform === 'win32') return listVolumesWin();
@@ -191,7 +193,6 @@ ipcMain.handle('volumes:list', () => {
 
 function listVolumesMac() {
   try {
-    // Use diskutil list for better volume info, fall back to df
     const raw   = execSync('df -Pk', { encoding: 'utf8' });
     const lines = raw.trim().split('\n').slice(1);
     const seen  = new Set(); // deduplicate by mount point
@@ -306,7 +307,7 @@ function listVolumesWin() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// DISK INFO — diskutil (macOS) / wmic (Windows)
+// DISK INFO — diskutil (macOS) / PowerShell (Windows)
 // ─────────────────────────────────────────────────────────────
 ipcMain.handle('volumes:info', (_, mountPoint) => {
   if (process.platform === 'darwin') {
@@ -491,7 +492,7 @@ function buildExportHtml(b64) {
 <html lang="en"><head><meta charset="utf-8">
 <title>archivo export</title>
 <style>
-:root{--bg:#0d0d11;--pn:#16161c;--bd:#242430;--tx:#e8e8ee;--mu:#9090a0;--v:#6e56e3;--vl:#8a76ec}
+:root{--bg:#0d0d11;--pn:#16161c;--bd:#242430;--tx:#e8e8ee;--mu:#9090a0;--v:#6e56e3}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;height:100vh;overflow:hidden}
 #side{width:260px;flex:none;background:var(--pn);border-right:1px solid var(--bd);overflow-y:auto;padding:10px}
@@ -605,7 +606,6 @@ inflate(GZ).then(txt=>{
 </script>
 </body></html>`;
 }
-
 
 // ─────────────────────────────────────────────────────────────
 // SHELL

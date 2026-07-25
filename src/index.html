@@ -12,7 +12,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>archivo 1.1.1</title>
+<title>archivo 1.1.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -64,9 +64,7 @@ body.plat-other #titlebar{padding:0 16px;}
 #titlebar *{-webkit-app-region:no-drag;}
 .tb-appicon{height:22px;width:22px;object-fit:contain;margin-right:9px;border-radius:5px;}
 .welcome-icon{width:72px;height:72px;object-fit:contain;border-radius:16px;margin-bottom:18px;}
-.tb-div{display:none;}
 .tb-name{font-family:var(--font-logo);font-size:18px;font-weight:600;letter-spacing:.01em;text-transform:lowercase;color:var(--tx);}
-.tb-ver{font-family:var(--mono);font-size:12px;color:var(--dm);margin-left:10px;}
 .tb-sp{flex:1;}
 #tb-dbname{font-family:var(--mono);font-size:12px;color:var(--mu);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
@@ -182,7 +180,6 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
 .tr.disk-row{border-bottom:1px solid var(--bd);}
 .tr-tog{width:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--dm);}
 .tr-ic{font-size:15px;flex-shrink:0;margin-right:5px;}
-.vol-icn{width:18px;height:18px;object-fit:contain;vertical-align:middle;display:block;}
 .vol-svg{display:flex;align-items:center;justify-content:center;color:var(--mu);}
 .vol-svg svg{width:18px;height:18px;}
 .vol-svg-md{display:flex;align-items:center;justify-content:center;color:var(--mu);}
@@ -419,7 +416,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="wb">
     <img src="assets/app-icon.png" class="welcome-icon" alt="" />
     <div class="wt">archivo</div>
-    <div class="ws">v1.1.1 · Hard Disk Catalog</div>
+    <div class="ws">v1.1.2 · Hard Disk Catalog</div>
     <div class="wbtns">
       <button class="wbp" id="btn-load-db">📂 Open Database</button>
       <button class="wbg" id="btn-start-empty">Start empty catalog</button>
@@ -519,7 +516,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
 
 <!-- STATUS BAR -->
 <div id="sb">
-  <span class="sb-ver" id="sb-ver">v1.1.1</span>
+  <span class="sb-ver" id="sb-ver">v1.1.2</span>
   <a class="sb-link" id="sb-github">GitHub</a>
   <a class="sb-link" id="sb-about">About</a>
   <span style="color:var(--bd2)">|</span>
@@ -532,7 +529,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="about-card">
     <img src="assets/app-icon.png" class="about-icon" alt="" />
     <div class="about-name">archivo</div>
-    <div class="about-ver" id="about-ver">v1.1.1</div>
+    <div class="about-ver" id="about-ver">v1.1.2</div>
     <div class="about-desc">Catalogue your archive drives once, search them all offline.</div>
     <div class="about-gpl">
       Free software under the <strong>GNU General Public License v3</strong>.<br>
@@ -1889,13 +1886,6 @@ function diskIconName(disk) {
   const ifc = (disk.iface || '').toLowerCase();
   if (ifc.includes('network') || ifc.includes('smb') || ifc.includes('nfs') || ifc.includes('afp')) return 'network';
   return 'USB';
-}
-function volEmoji(v) {
-  if (!v) return '💾';
-  if (v.vol_type === 'network') return '🌐';
-  if (v.vol_type === 'system')  return '🖥';
-  if (v.vol_type === 'usb')     return '💽';
-  return '💾';
 }
 
 // Inline SVG icons (line style, colour via currentColor). Mapping:
