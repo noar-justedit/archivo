@@ -21,6 +21,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('archivo', {
   exportCatalog:  (catalog) => ipcRenderer.invoke('catalog:export', catalog),
   importCatalog:  ()       => ipcRenderer.invoke('catalog:import'),
+  exportText:     opts     => ipcRenderer.invoke('export:text', opts),
+  exportHtml:     opts     => ipcRenderer.invoke('export:html', opts),
 
   listVolumes:    ()       => ipcRenderer.invoke('volumes:list'),
   getDiskInfo:    mount    => ipcRenderer.invoke('volumes:info', mount),

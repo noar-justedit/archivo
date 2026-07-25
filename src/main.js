@@ -456,6 +456,158 @@ ipcMain.handle('volumes:scan', async (event, mountPoint) => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// EXPORT — CSV (plain text) and standalone HTML viewer (gzip-embedded)
+// ─────────────────────────────────────────────────────────────
+ipcMain.handle('export:text', async (_, { content, defaultName, filterName, extensions }) => {
+  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+    title:       'Export',
+    defaultPath: path.join(os.homedir(), 'Desktop', defaultName || 'export.txt'),
+    filters:     [{ name: filterName || 'File', extensions: extensions || ['txt'] }]
+  });
+  if (canceled || !filePath) return null;
+  fs.writeFileSync(filePath, content, 'utf8');
+  return filePath;
+});
+
+ipcMain.handle('export:html', async (_, { json, defaultName }) => {
+  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+    title:       'Export as HTML',
+    defaultPath: path.join(os.homedir(), 'Desktop', defaultName || 'archivo_export.html'),
+    filters:     [{ name: 'HTML', extensions: ['html'] }]
+  });
+  if (canceled || !filePath) return null;
+  // Gzip the catalog JSON and embed it as base64. The exported file's own
+  // script decompresses it client-side with the browser's native
+  // DecompressionStream — no bundled libraries, smallest possible output.
+  const gz  = zlib.gzipSync(Buffer.from(json, 'utf8'), { level: 9 });
+  const b64 = gz.toString('base64');
+  const html = buildExportHtml(b64);
+  fs.writeFileSync(filePath, html, 'utf8');
+  return filePath;
+});
+
+function buildExportHtml(b64) {
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<title>archivo export</title>
+<style>
+:root{--bg:#0d0d11;--pn:#16161c;--bd:#242430;--tx:#e8e8ee;--mu:#9090a0;--v:#6e56e3;--vl:#8a76ec}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;height:100vh;overflow:hidden}
+#side{width:260px;flex:none;background:var(--pn);border-right:1px solid var(--bd);overflow-y:auto;padding:10px}
+#side h1{font-size:15px;margin:4px 8px 12px;font-weight:600}
+.dk{padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px}
+.dk:hover{background:var(--bd)}
+.dk.sel{background:var(--v);color:#fff}
+.dk .m{font-size:11px;color:var(--mu);display:block}
+.dk.sel .m{color:#d8d2fb}
+#main{flex:1;overflow-y:auto;padding:16px 20px}
+#search{width:100%;padding:9px 12px;border-radius:6px;border:1px solid var(--bd);background:var(--pn);color:var(--tx);font-size:13px;margin-bottom:14px}
+.node{padding:3px 0 3px 18px;font-size:13px;white-space:nowrap;cursor:pointer;user-select:none}
+.node.file{cursor:default;color:var(--mu)}
+.node .nm{color:var(--tx)}
+.node .sz{color:var(--mu);font-size:11px;margin-left:8px}
+.kids{margin-left:14px;border-left:1px solid var(--bd)}
+.hidden{display:none}
+.hit{padding:6px 4px;border-bottom:1px solid var(--bd);font-size:12px}
+.hit .p{color:var(--mu)}
+#empty{color:var(--mu);padding:40px;text-align:center}
+</style></head>
+<body>
+<div id="side"><h1>archivo export</h1><div id="disklist"></div></div>
+<div id="main">
+  <input id="search" placeholder="Search files…" oninput="doSearch(this.value)">
+  <div id="tree"></div>
+</div>
+<script>
+const GZ = "${b64}";
+function b64ToBytes(b64){const bin=atob(b64);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return arr;}
+async function inflate(b64){
+  const bytes = b64ToBytes(b64);
+  const ds = new DecompressionStream('gzip');
+  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  const buf = await new Response(stream).arrayBuffer();
+  return new TextDecoder().decode(buf);
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+let DATA=[], FLAT=null, curDisk=0;
+function renderDiskList(){
+  const el=document.getElementById('disklist');
+  el.innerHTML = DATA.map((d,i)=>\`<div class="dk\${i===curDisk?' sel':''}" onclick="selectDisk(\${i})">\${esc(d.label)}<span class="m">\${esc(d.total||'')}</span></div>\`).join('');
+}
+function selectDisk(i){
+  curDisk=i;
+  renderDiskList();
+  document.getElementById('search').value='';
+  const t=document.getElementById('tree');
+  t.innerHTML='';
+  t.appendChild(renderNodes(DATA[i].tree||[]));
+}
+function renderNodes(nodes){
+  const frag=document.createDocumentFragment();
+  for(const n of nodes){
+    const row=document.createElement('div');
+    row.className='node'+(n.type==='file'?' file':'');
+    if(n.type==='dir'){
+      row.innerHTML='<span class="nm">▸ '+esc(n.name)+'</span>';
+      const kids=document.createElement('div');
+      kids.className='kids hidden';
+      let built=false;
+      row.onclick=(e)=>{e.stopPropagation();
+        if(!built){kids.appendChild(renderNodes(n.children||[]));built=true;}
+        kids.classList.toggle('hidden');
+        row.querySelector('.nm').textContent=(kids.classList.contains('hidden')?'▸ ':'▾ ')+n.name;
+      };
+      const wrap=document.createElement('div');
+      wrap.appendChild(row); wrap.appendChild(kids);
+      frag.appendChild(wrap);
+    } else {
+      row.innerHTML='<span class="nm">'+esc(n.name)+'</span><span class="sz">'+esc(n.size||'')+'</span>';
+      frag.appendChild(row);
+    }
+  }
+  return frag;
+}
+function buildFlat(){
+  FLAT=[];
+  DATA.forEach(d=>{
+    (function walk(nodes,p){
+      for(const n of nodes){
+        const full=p?p+'/'+n.name:n.name;
+        if(n.type==='file') FLAT.push({disk:d.label,path:full,size:n.size||''});
+        else walk(n.children||[],full);
+      }
+    })(d.tree||[],'');
+  });
+}
+let searchTimer=null;
+function doSearch(q){
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(()=>{
+    const t=document.getElementById('tree');
+    q=q.trim().toLowerCase();
+    if(!q){ selectDisk(curDisk); return; }
+    if(!FLAT) buildFlat();
+    const hits=FLAT.filter(f=>f.path.toLowerCase().includes(q)).slice(0,500);
+    t.innerHTML = hits.length
+      ? hits.map(h=>\`<div class="hit"><div>\${esc(h.path.split('/').pop())} <span class="sz">\${esc(h.size)}</span></div><div class="p">\${esc(h.disk)} / \${esc(h.path)}</div></div>\`).join('')
+      : '<div id="empty">No matches</div>';
+  },120);
+}
+inflate(GZ).then(txt=>{
+  DATA=JSON.parse(txt);
+  if(!DATA.length){document.getElementById('main').innerHTML='<div id="empty">Empty catalog</div>';return;}
+  renderDiskList();
+  selectDisk(0);
+}).catch(()=>{
+  document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:#e8e8ee;background:#0d0d11">This export needs a modern browser (Chrome, Edge, Firefox 113+, Safari 16.4+) to open.</div>';
+});
+</script>
+</body></html>`;
+}
+
+
+// ─────────────────────────────────────────────────────────────
 // SHELL
 // ─────────────────────────────────────────────────────────────
 ipcMain.handle('shell:reveal', (_, filePath) => {

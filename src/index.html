@@ -12,7 +12,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>archivo 1.1.0</title>
+<title>archivo 1.1.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -301,6 +301,17 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
 .about-copy{font-family:var(--mono);font-size:10px;color:var(--dm);margin-bottom:18px;}
 .about-close{padding:9px 24px;background:var(--v);border:none;border-radius:var(--r);font-family:var(--font);font-size:13px;font-weight:600;color:#fff;cursor:pointer;}
 .about-close:hover{background:var(--vlt);}
+/* Export modal */
+#exp-ov{display:none;position:fixed;inset:0;z-index:1300;background:rgba(0,0,0,.72);align-items:center;justify-content:center;}
+#exp-ov.open{display:flex;}
+.exp-card{background:var(--card);border:1px solid var(--bd2);border-radius:14px;padding:26px 28px;max-width:420px;width:90%;}
+.exp-title{font-family:var(--font);font-size:16px;font-weight:600;color:var(--tx);margin-bottom:16px;}
+.exp-opt{border:1px solid var(--bd2);border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color .1s;}
+.exp-opt:hover{border-color:var(--v);background:var(--vbg);}
+.exp-opt-t{font-family:var(--font);font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px;}
+.exp-opt-d{font-family:var(--font);font-size:12px;color:var(--mu);line-height:1.45;}
+#exp-cancel{width:100%;margin-top:6px;background:transparent;border:1px solid var(--bd2);color:var(--mu);}
+#exp-cancel:hover{background:var(--bd2);color:var(--tx);}
 
 /* ── ADD DISK MODAL ── */
 #add-modal{
@@ -408,7 +419,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="wb">
     <img src="assets/app-icon.png" class="welcome-icon" alt="" />
     <div class="wt">archivo</div>
-    <div class="ws">v1.1.0 · Hard Disk Catalog</div>
+    <div class="ws">v1.1.1 · Hard Disk Catalog</div>
     <div class="wbtns">
       <button class="wbp" id="btn-load-db">📂 Open Database</button>
       <button class="wbg" id="btn-start-empty">Start empty catalog</button>
@@ -442,6 +453,11 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="btn" id="btn-close">
     <div class="btn-ic">✕</div>
     <div class="btn-lb">Close Database</div>
+  </div>
+  <div class="tsep"></div>
+  <div class="btn" id="btn-export-data">
+    <div class="btn-ic">⇩</div>
+    <div class="btn-lb">Export</div>
   </div>
   <div class="tsep"></div>
   <div class="btn" id="btn-delete">
@@ -503,7 +519,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
 
 <!-- STATUS BAR -->
 <div id="sb">
-  <span class="sb-ver" id="sb-ver">v1.1.0</span>
+  <span class="sb-ver" id="sb-ver">v1.1.1</span>
   <a class="sb-link" id="sb-github">GitHub</a>
   <a class="sb-link" id="sb-about">About</a>
   <span style="color:var(--bd2)">|</span>
@@ -516,7 +532,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="about-card">
     <img src="assets/app-icon.png" class="about-icon" alt="" />
     <div class="about-name">archivo</div>
-    <div class="about-ver" id="about-ver">v1.1.0</div>
+    <div class="about-ver" id="about-ver">v1.1.1</div>
     <div class="about-desc">Catalogue your archive drives once, search them all offline.</div>
     <div class="about-gpl">
       Free software under the <strong>GNU General Public License v3</strong>.<br>
@@ -529,6 +545,22 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
     </div>
     <div class="about-copy">© 2026 just edit · archivo is free software</div>
     <button class="about-close" id="about-close">Close</button>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div id="exp-ov">
+  <div class="exp-card">
+    <div class="exp-title">Export catalog</div>
+    <div class="exp-opt" id="exp-csv">
+      <div class="exp-opt-t">📄 CSV — for Google Sheets</div>
+      <div class="exp-opt-d">A flat list of every file (disk, path, size, date). Import it into Google Sheets or Excel to share with your team.</div>
+    </div>
+    <div class="exp-opt" id="exp-html">
+      <div class="exp-opt-t">🌐 HTML — standalone web viewer</div>
+      <div class="exp-opt-d">A single searchable file, viewable in any browser, no install needed. Share it directly with your team.</div>
+    </div>
+    <button class="about-close" id="exp-cancel">Cancel</button>
   </div>
 </div>
 
@@ -765,6 +797,53 @@ function openAbout() {
   g('about-ov').classList.add('open');
 }
 
+// CSV field: only quote when needed (comma, quote, newline) — keeps output small.
+function csvField(v) {
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+// Flat CSV of every file across all disks: Disk, Path, Size, Modified.
+// Directories are skipped on purpose — the smallest useful export for a
+// team to search/filter in Google Sheets.
+async function exportCsv() {
+  const rows = ['Disk,Path,Size,Modified'];
+  for (const d of DB.disks) {
+    (function walk(nodes, prefix) {
+      for (const n of nodes) {
+        const full = prefix ? prefix + '/' + n.name : n.name;
+        if (n.type === 'file') {
+          rows.push([csvField(d.label), csvField(full), csvField(n.size || ''), csvField(n.modified || '')].join(','));
+        } else {
+          walk(n.children || [], full);
+        }
+      }
+    })(d.tree || [], '');
+  }
+  const content = rows.join('\n');
+  try {
+    const filePath = await window.archivo.exportText({
+      content, defaultName: 'archivo_export.csv', filterName: 'CSV', extensions: ['csv']
+    });
+    if (filePath) toast('CSV exported — ' + (rows.length - 1).toLocaleString() + ' files.', 'ok');
+  } catch (e) { toast('Export error: ' + e, 'err'); }
+}
+
+// Standalone searchable HTML viewer. Only the fields the viewer needs are
+// kept (id/source/mount path dropped) to keep the exported file small.
+async function exportHtmlViewer() {
+  const payload = DB.disks.map(d => ({
+    label: d.label, model: d.model, serial: d.serial, total: d.total, free: d.free,
+    iface: d.iface, scanned: d.scanned, note: d.note || '', tree: d.tree || []
+  }));
+  try {
+    const filePath = await window.archivo.exportHtml({
+      json: JSON.stringify(payload), defaultName: 'archivo_export.html'
+    });
+    if (filePath) toast('HTML export saved.', 'ok');
+  } catch (e) { toast('Export error: ' + e, 'err'); }
+}
+
 function showUpdateNotice({ version, url }) {
   if (!version || version === dismissedUpdateVersion) return;
   if (document.getElementById('update-ov')) return;
@@ -812,6 +891,16 @@ function wireButtons() {
   g('about-ov').addEventListener('click', e => { if (e.target === g('about-ov')) g('about-ov').classList.remove('open'); });
   g('about-repo').addEventListener('click', () => { try { window.archivo.openExternal(REPO_URL); } catch(e){} });
   g('about-license').addEventListener('click', () => { try { window.archivo.openExternal(REPO_URL + '/blob/main/LICENSE'); } catch(e){} });
+
+  // Export (CSV / HTML)
+  g('btn-export-data').addEventListener('click', () => {
+    if (!DB.disks.length) { toast('Nothing to export yet.', 'info'); return; }
+    g('exp-ov').classList.add('open');
+  });
+  g('exp-cancel').addEventListener('click', () => g('exp-ov').classList.remove('open'));
+  g('exp-ov').addEventListener('click', e => { if (e.target === g('exp-ov')) g('exp-ov').classList.remove('open'); });
+  g('exp-csv').addEventListener('click', async () => { g('exp-ov').classList.remove('open'); await exportCsv(); });
+  g('exp-html').addEventListener('click', async () => { g('exp-ov').classList.remove('open'); await exportHtmlViewer(); });
   g('btn-delete').addEventListener('click',     deleteSelected);
   g('btn-inspector').addEventListener('click',  toggleInspector);
   // Add disk modal

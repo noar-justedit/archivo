@@ -62,19 +62,23 @@ npm start          # run in dev
 
 ### Packaging
 
+`.command` files can be run from a terminal (`./build-mac.command`) or simply
+double-clicked in Finder — they open a Terminal window, run the build, and
+wait for a keypress before closing so you can read the output.
+
 ```bash
 # macOS (Apple Silicon) — DMG + zip
-./build-mac.sh
+./build-mac.command
 
 # Windows installer + portable, from a Windows machine
 ./build-win.bat        # or: npm run build:win
 
 # Windows build cross-compiled from macOS (uses Wine)
-./build-win-from-mac.sh
+./build-win-from-mac.command
 ```
 
 Building the Windows target from macOS requires Homebrew and Wine; the
-`build-win-from-mac.sh` script checks for them and guides the install.
+`build-win-from-mac.command` script checks for them and guides the install.
 
 ## Project structure
 
@@ -87,9 +91,9 @@ archivo/
 │   ├── assets/        App icon
 │   └── fonts/         Poppins (OFL)
 ├── build/             Packaging icons (icon.icns, icon.ico)
-├── build-mac.sh       macOS build
+├── build-mac.command   macOS build (double-click in Finder)
 ├── build-win.bat      Windows build (on Windows)
-├── build-win-from-mac.sh  Windows build from macOS via Wine
+├── build-win-from-mac.command  Windows build from macOS via Wine
 ├── version.json       Update manifest read by the app
 └── package.json       electron-builder config
 ```
