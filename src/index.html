@@ -12,7 +12,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>archivo 1.1.2</title>
+<title>archivo 1.2.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -416,7 +416,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="wb">
     <img src="assets/app-icon.png" class="welcome-icon" alt="" />
     <div class="wt">archivo</div>
-    <div class="ws">v1.1.2 · Hard Disk Catalog</div>
+    <div class="ws">v1.2.0 · Hard Disk Catalog</div>
     <div class="wbtns">
       <button class="wbp" id="btn-load-db">📂 Open Database</button>
       <button class="wbg" id="btn-start-empty">Start empty catalog</button>
@@ -516,7 +516,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
 
 <!-- STATUS BAR -->
 <div id="sb">
-  <span class="sb-ver" id="sb-ver">v1.1.2</span>
+  <span class="sb-ver" id="sb-ver">v1.2.0</span>
   <a class="sb-link" id="sb-github">GitHub</a>
   <a class="sb-link" id="sb-about">About</a>
   <span style="color:var(--bd2)">|</span>
@@ -529,7 +529,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="about-card">
     <img src="assets/app-icon.png" class="about-icon" alt="" />
     <div class="about-name">archivo</div>
-    <div class="about-ver" id="about-ver">v1.1.2</div>
+    <div class="about-ver" id="about-ver">v1.2.0</div>
     <div class="about-desc">Catalogue your archive drives once, search them all offline.</div>
     <div class="about-gpl">
       Free software under the <strong>GNU General Public License v3</strong>.<br>
@@ -829,6 +829,9 @@ async function exportCsv() {
 // Standalone searchable HTML viewer. Only the fields the viewer needs are
 // kept (id/source/mount path dropped) to keep the exported file small.
 async function exportHtmlViewer() {
+  // Make sure every folder's size is computed (not just the ones the user
+  // has expanded in-app) so the exported viewer shows sizes everywhere.
+  for (const d of DB.disks) for (const n of (d.tree || [])) getDirSize(n);
   const payload = DB.disks.map(d => ({
     label: d.label, model: d.model, serial: d.serial, total: d.total, free: d.free,
     iface: d.iface, scanned: d.scanned, note: d.note || '', tree: d.tree || []
@@ -1145,6 +1148,35 @@ function diskRow(disk) {
   </div>`;
 }
 
+// Parse a size value into raw bytes, whether it's already a number (new
+// scans) or a preformatted string like "66 KB" / "1,9 MB" (legacy catalogs,
+// e.g. DiskCatalogMaker imports) — needed so folder totals can be summed.
+function toBytes(v) {
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
+  if (typeof v !== 'string') return 0;
+  const s = v.trim();
+  if (!s) return 0;
+  const m = s.match(/^([\d.,]+)\s*([a-zA-Z]+)$/);
+  if (!m) { const f = parseFloat(s.replace(',', '.')); return isFinite(f) ? f : 0; }
+  const num = parseFloat(m[1].replace(',', '.'));
+  if (!isFinite(num)) return 0;
+  const mult = { b:1, byte:1, bytes:1, kb:1024, mb:1024**2, gb:1024**3, tb:1024**4 }[m[2].toLowerCase()];
+  return mult ? num * mult : num;
+}
+
+// Folder size: sum of all descendant files. New scans already carry this on
+// dir nodes (as a number); for catalogs saved before that — or with legacy
+// preformatted-string sizes — compute it once here and memoize it onto the
+// node as a number, so it's O(1) after and displays correctly via fmtB().
+function getDirSize(n) {
+  if (n.type !== 'dir') return toBytes(n.size);
+  if (typeof n.size === 'number') return n.size;
+  let total = 0;
+  for (const c of (n.children || [])) total += getDirSize(c);
+  n.size = total;
+  return total;
+}
+
 function childRows(rows, nodes, disk, depth, parentKey) {
   if (!nodes || !nodes.length) return;
   for (const n of nodes) {
@@ -1166,7 +1198,7 @@ function childRows(rows, nodes, disk, depth, parentKey) {
       '<div class="tr-tog">' + (isDir ? '<span data-tog="1">' + (exp ? '▾' : '▶') + '</span>' : '') + '</div>' +
       '<div class="tr-ic">' + icon + '</div>' +
       '<div class="tr-nm">' + esc(n.name) + '</div>' +
-      '<div class="tr-sz">' + (n.size ? fmtB(n.size) : '') + '</div>' +
+      '<div class="tr-sz">' + fmtB(isDir ? getDirSize(n) : (n.size || 0)) + '</div>' +
       '<div class="tr-fr"></div>' +
       '<div class="tr-kd">' + (isDir ? 'folder' : 'file') + '</div>' +
       '<div class="tr-dt">' + (n.modified || '') + '</div>' +
@@ -1297,7 +1329,7 @@ function updateInsp() {
         <div class="ist">General</div>
         <div class="ir"><span class="ik">Name</span><span class="iv">${esc(n.name)}</span></div>
         <div class="ir"><span class="ik">Kind</span><span class="iv">${isDir?'folder':typeStr(ext)}</span></div>
-        ${n.size?`<div class="ir"><span class="ik">Size</span><span class="iv v">${fmtB(n.size)}</span></div>`:''}
+        ${(isDir ? getDirSize(n) : n.size) ? `<div class="ir"><span class="ik">Size</span><span class="iv v">${fmtB(isDir ? getDirSize(n) : n.size)}</span></div>` : ''}
         ${isDir&&n.children?`<div class="ir"><span class="ik">Items</span><span class="iv">${n.children.length}</span></div>`:''}
         ${ext?`<div class="ir"><span class="ik">Extension</span><span class="iv">.${ext}</span></div>`:''}
         <div class="ir"><span class="ik">Modified</span><span class="iv">${esc(n.modified||'—')}</span></div>
@@ -1737,7 +1769,7 @@ function execSearch(q) {
       const nm=r.node?r.node.name:r.disk.label;
       const ic=!r.node?'🖥':r.node.type==='dir'?'📁':fileIcon(r.node.name);
       const hl=esc(nm).replace(new RegExp('('+escRe(q.trim())+')','gi'),'<em>$1</em>');
-      const sz=r.node&&r.node.size?fmtB(r.node.size):'';
+      const sz=r.node?fmtB(r.node.type==='dir'?getDirSize(r.node):(r.node.size||0)):'';
       const dt=r.node?(r.node.modified||''):(r.disk.scanned||'').slice(0,10);
       return`<div class="sr" data-did="${r.disk.id}" data-pp="${esc(JSON.stringify(r.pp))}" data-nm="${esc(nm)}">
         <div class="sr-ic">${ic}</div><div class="sr-nm">${hl}</div>

@@ -425,7 +425,9 @@ ipcMain.handle('volumes:scan', async (event, mountPoint) => {
       let stat;
       try { stat = fs.statSync(full); } catch { continue; }
       if (e.isDirectory()) {
-        nodes.push({ type:'dir', name:e.name, modified:stat.mtime.toISOString().slice(0,10), children: await walk(full, depth+1) });
+        const children = await walk(full, depth+1);
+        const dirSize  = children.reduce((sum, c) => sum + (c.size || 0), 0);
+        nodes.push({ type:'dir', name:e.name, size:dirSize, modified:stat.mtime.toISOString().slice(0,10), children });
       } else if (e.isFile()) {
         done++;
         nodes.push({ type:'file', name:e.name, size:stat.size, modified:stat.mtime.toISOString().slice(0,10) });
@@ -531,6 +533,12 @@ async function inflate(b64){
   return new TextDecoder().decode(buf);
 }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtB(b){
+  if(typeof b!=='number'||!isFinite(b)||b<=0) return String(b||'');
+  const u=['B','KB','MB','GB','TB'];let i=0;
+  while(b>=1024&&i<u.length-1){b/=1024;i++;}
+  return b.toFixed(i>1?1:0)+' '+u[i];
+}
 let DATA=[], FLAT=null, curDisk=0;
 function renderDiskList(){
   const el=document.getElementById('disklist');
@@ -550,7 +558,7 @@ function renderNodes(nodes){
     const row=document.createElement('div');
     row.className='node'+(n.type==='file'?' file':'');
     if(n.type==='dir'){
-      row.innerHTML='<span class="nm">▸ '+esc(n.name)+'</span>';
+      row.innerHTML='<span class="nm">▸ '+esc(n.name)+'</span><span class="sz">'+fmtB(n.size)+'</span>';
       const kids=document.createElement('div');
       kids.className='kids hidden';
       let built=false;
@@ -563,7 +571,7 @@ function renderNodes(nodes){
       wrap.appendChild(row); wrap.appendChild(kids);
       frag.appendChild(wrap);
     } else {
-      row.innerHTML='<span class="nm">'+esc(n.name)+'</span><span class="sz">'+esc(n.size||'')+'</span>';
+      row.innerHTML='<span class="nm">'+esc(n.name)+'</span><span class="sz">'+fmtB(n.size)+'</span>';
       frag.appendChild(row);
     }
   }
@@ -591,7 +599,7 @@ function doSearch(q){
     if(!FLAT) buildFlat();
     const hits=FLAT.filter(f=>f.path.toLowerCase().includes(q)).slice(0,500);
     t.innerHTML = hits.length
-      ? hits.map(h=>\`<div class="hit"><div>\${esc(h.path.split('/').pop())} <span class="sz">\${esc(h.size)}</span></div><div class="p">\${esc(h.disk)} / \${esc(h.path)}</div></div>\`).join('')
+      ? hits.map(h=>\`<div class="hit"><div>\${esc(h.path.split('/').pop())} <span class="sz">\${fmtB(h.size)}</span></div><div class="p">\${esc(h.disk)} / \${esc(h.path)}</div></div>\`).join('')
       : '<div id="empty">No matches</div>';
   },120);
 }
