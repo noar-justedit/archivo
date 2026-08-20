@@ -37,7 +37,13 @@ the catalog, and scans the selected drive with live progress.
 - Live scan progress with percentage and estimated time, cancellable
 - Path bar showing the disk and full location of any selected file
 - Compressed catalog files (`.archivo`), up to ~90% smaller than raw JSON
-- Document-based: open, save and close catalogs like any other file
+- Document-based: New / Open / Save / Save As, with an edited marker in the
+  title bar and a prompt before anything would discard unsaved changes
+- Double-click a `.archivo` file in Finder or Explorer to open it, or drop it
+  anywhere on the window
+- Open Recent, in the File menu and on the welcome screen
+- Full application menu with the usual keyboard shortcuts
+- Atomic saves: an interrupted save can never truncate the catalog on disk
 - Optional update check against a version file hosted in this repo
 
 ## Install (from a release)
@@ -58,13 +64,24 @@ git clone https://github.com/noar-justedit/archivo.git
 cd archivo
 npm install
 npm start          # run in dev
+npm test           # headless smoke test of the document model
 ```
+
+On Linux/CI the test needs a display: `xvfb-run -a npm test`.
 
 ### Packaging
 
 `.command` files can be run from a terminal (`./build-mac.command`) or simply
 double-clicked in Finder — they open a Terminal window, run the build, and
 wait for a keypress before closing so you can read the output.
+
+If you downloaded the sources as a ZIP (or the files were uploaded through the
+GitHub web interface, which drops the executable bit), make the scripts
+runnable once:
+
+```bash
+chmod +x build*.sh build*.command
+```
 
 ```bash
 # macOS (Apple Silicon) — DMG + zip
@@ -79,17 +96,22 @@ wait for a keypress before closing so you can read the output.
 
 Building the Windows target from macOS requires Homebrew and Wine; the
 `build-win-from-mac.command` script checks for them and guides the install.
+The NSIS installer cross-builds cleanly; the *portable* `.exe` additionally
+needs 32-bit support in Wine, so if that step fails, build on a real Windows
+machine with `build-win.bat` — the installer is unaffected.
 
 ## Project structure
 
 ```
 archivo/
 ├── src/
-│   ├── main.js        Electron main process (windows, IPC, volume scan, update check)
+│   ├── main.js        Electron main process (window, menu, document state,
+│   │                  IPC, volume scan, update check)
 │   ├── preload.js     Context-isolated bridge (window.archivo API)
 │   ├── index.html     Renderer: full UI, styles and app logic
 │   ├── assets/        App icon
 │   └── fonts/         Poppins (OFL)
+├── test/smoke.js      Headless test of the document model (npm test)
 ├── build/             Packaging icons (icon.icns, icon.ico)
 ├── build-mac.command   macOS build (double-click in Finder)
 ├── build-win.bat      Windows build (on Windows)
@@ -110,11 +132,27 @@ bump the version there after cutting a release:
 The check fails silently offline and never blocks startup. A newer version
 shows a dismissible notice; a dismissed version is not shown again.
 
+## Keyboard shortcuts
+
+| | macOS | Windows |
+|---|---|---|
+| New catalog | ⌘N | Ctrl+N |
+| Open catalog | ⌘O | Ctrl+O |
+| Save | ⌘S | Ctrl+S |
+| Save As | ⇧⌘S | Ctrl+Shift+S |
+| Add disk | ⌘D | Ctrl+D |
+| Export | ⌘E | Ctrl+E |
+| Find | ⌘F | Ctrl+F |
+| Toggle inspector | ⌘I | Ctrl+I |
+| Close catalog | ⇧⌘W | Ctrl+Shift+W |
+
 ## Data format
 
 A catalog is JSON: a list of disks, each with metadata and a nested file
 tree. Saved catalogs are gzip-compressed with an `.archivo` extension; plain
-`.json` catalogs are also read. Everything stays local, there is no account
+`.json` catalogs are read, and written uncompressed if you pick the JSON
+filter in Save As. Saves go through a temp file in the same folder and are
+renamed into place, so an interrupted save leaves the previous file intact. Everything stays local, there is no account
 and no telemetry.
 
 ## License

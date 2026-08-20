@@ -17,7 +17,7 @@
  */
 'use strict';
 
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron');
 const path   = require('path');
 const fs     = require('fs');
 const os     = require('os');
@@ -26,6 +26,58 @@ const https  = require('https');
 const { execSync, execFileSync } = require('child_process');
 
 let mainWindow;
+
+const REPO_URL = 'https://github.com/noar-justedit/archivo';
+
+// ─────────────────────────────────────────────────────────────
+// DOCUMENT STATE — archivo behaves like a document-based app:
+// one catalog is "open" at a time, it has a file path once saved,
+// and an edited flag that drives the title bar and the quit guard.
+// ─────────────────────────────────────────────────────────────
+let currentPath     = null;  // path of the open .archivo file (null = never saved)
+let docDirty        = false; // unsaved changes?
+let forceClose      = false; // set once the user has decided, so close() goes through
+let rendererReady   = false;
+let pendingOpenPath = null;  // file handed over by the OS before the UI was ready
+
+// A catalog path passed on the command line (Windows/Linux double-click).
+function argvCatalog(argv) {
+  return (argv || []).slice(1).find(a =>
+    typeof a === 'string' && /\.(archivo|json)$/i.test(a) && fs.existsSync(a)
+  ) || null;
+}
+
+// Only one instance: a second double-click hands its file to the running app.
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (_e, argv) => {
+    const p = argvCatalog(argv);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+    if (p) requestOpen(p);
+  });
+}
+
+// macOS hands over double-clicked documents through this event, which can
+// fire before the app is ready — so it must be registered at module level.
+app.on('open-file', (event, filePath) => {
+  event.preventDefault();
+  requestOpen(filePath);
+});
+
+// Ask the renderer to open a file (it owns the unsaved-changes guard).
+function requestOpen(filePath) {
+  if (rendererReady && mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('doc:open-request', filePath);
+    mainWindow.focus();
+  } else {
+    pendingOpenPath = filePath;
+  }
+}
 
 // ── Update check — reads version.json hosted in the GitHub repo ──
 // Never blocks startup, fails silently on any network issue.
@@ -59,14 +111,21 @@ function fetchFollow(url, hops, cb) {
     req.on('error', () => cb(null));
   } catch (e) { cb(null); }
 }
-function checkForUpdate() {
+// interactive = triggered from the Help menu, so report "up to date" / "failed"
+// as well. The silent launch check stays silent.
+function checkForUpdate(interactive) {
+  const say = (channel, payload) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload);
+  };
   fetchFollow(UPDATE_URL, 0, (body) => {
-    if (!body) return;
-    let data; try { data = JSON.parse(body); } catch (e) { return; }
+    if (!body) { if (interactive) say('update-none', { failed: true }); return; }
+    let data; try { data = JSON.parse(body); } catch (e) { if (interactive) say('update-none', { failed: true }); return; }
     const info = data.archivo;
-    if (!info || !info.version) return;
-    if (semverGt(info.version, app.getVersion()) && mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('update-available', { version: info.version, url: info.url || 'https://github.com/noar-justedit/archivo/releases' });
+    if (!info || !info.version) { if (interactive) say('update-none', { failed: true }); return; }
+    if (semverGt(info.version, app.getVersion())) {
+      say('update-available', { version: info.version, url: info.url || REPO_URL + '/releases' });
+    } else if (interactive) {
+      say('update-none', { failed: false, version: app.getVersion() });
     }
   });
 }
@@ -100,11 +159,50 @@ function createWindow() {
     if (!url.startsWith('file://')) e.preventDefault();
   });
 
+  // Unsaved-changes guard. Closing the window is also what quitting does,
+  // so this covers Cmd+Q / Alt+F4 / the red button in one place.
+  mainWindow.on('close', (e) => {
+    if (forceClose || !docDirty) return;
+    e.preventDefault();
+    const choice = dialog.showMessageBoxSync(mainWindow, {
+      type:      'warning',
+      buttons:   ['Save', "Don't Save", 'Cancel'],
+      defaultId: 0,
+      cancelId:  2,
+      message:   `Save changes to "${docBaseName()}" before closing?`,
+      detail:    "If you don't save, your changes will be lost.",
+    });
+    if (choice === 2) return;                       // Cancel
+    if (choice === 1) { forceClose = true; mainWindow.close(); return; }  // Don't Save
+    // Save: the renderer owns the catalog, so it saves then calls back.
+    mainWindow.webContents.send('menu:command', { cmd: 'save-and-close' });
+  });
+
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
-  mainWindow.webContents.once('did-finish-load', () => { setTimeout(checkForUpdate, 1500); });
+  mainWindow.webContents.once('did-finish-load', () => {
+    applyDocState();
+    setTimeout(() => checkForUpdate(false), 1500);
+  });
 }
 
-app.whenReady().then(createWindow);
+// ── Title bar / proxy icon / edited dot ──
+function docBaseName() {
+  return currentPath ? path.basename(currentPath) : 'Untitled catalog';
+}
+function applyDocState() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.setTitle('archivo — ' + docBaseName() + (docDirty ? ' — Edited' : ''));
+  if (process.platform === 'darwin') {
+    try { mainWindow.setRepresentedFilename(currentPath || ''); } catch (e) {}
+    try { mainWindow.setDocumentEdited(docDirty); } catch (e) {}
+  }
+}
+
+app.whenReady().then(() => {
+  if (!pendingOpenPath) pendingOpenPath = argvCatalog(process.argv);
+  buildMenu();
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
@@ -120,17 +218,74 @@ app.on('activate', () => {
 // ─────────────────────────────────────────────────────────────
 const PREFS_FILE = path.join(app.getPath('userData'), 'archivo_prefs.json');
 
-ipcMain.handle('app:version', () => app.getVersion());
-
-ipcMain.handle('prefs:load', () => {
-  try { return JSON.parse(fs.readFileSync(PREFS_FILE, 'utf8')); }
+function readPrefs() {
+  try { return JSON.parse(fs.readFileSync(PREFS_FILE, 'utf8')) || {}; }
   catch { return {}; }
-});
-ipcMain.handle('prefs:save', (_, prefs) => {
+}
+function writePrefs(prefs) {
   try {
     fs.mkdirSync(path.dirname(PREFS_FILE), { recursive: true });
     fs.writeFileSync(PREFS_FILE, JSON.stringify(prefs || {}, null, 2), 'utf8');
   } catch {}
+  return true;
+}
+
+ipcMain.handle('app:version', () => app.getVersion());
+ipcMain.handle('prefs:load', () => readPrefs());
+ipcMain.handle('prefs:save', (_, prefs) => writePrefs(prefs));
+
+// ── RECENT CATALOGS ──
+// Kept in our own prefs file (so the welcome screen can show them) and
+// mirrored into the OS list (macOS "Open Recent", Windows jump list).
+const MAX_RECENTS = 10;
+
+function getRecents() {
+  const list = readPrefs().recents;
+  if (!Array.isArray(list)) return [];
+  return list.filter(p => typeof p === 'string' && fs.existsSync(p)).slice(0, MAX_RECENTS);
+}
+function addRecent(filePath) {
+  if (!filePath) return;
+  const prefs = readPrefs();
+  const list  = (Array.isArray(prefs.recents) ? prefs.recents : []).filter(p => p !== filePath);
+  list.unshift(filePath);
+  prefs.recents = list.slice(0, MAX_RECENTS);
+  writePrefs(prefs);
+  try { app.addRecentDocument(filePath); } catch (e) {}
+  buildMenu();
+}
+function clearRecents() {
+  const prefs = readPrefs();
+  prefs.recents = [];
+  writePrefs(prefs);
+  try { app.clearRecentDocuments(); } catch (e) {}
+  buildMenu();
+  return [];
+}
+
+ipcMain.handle('recents:list',  () => getRecents());
+ipcMain.handle('recents:clear', () => clearRecents());
+
+// ── DOCUMENT LIFECYCLE ──
+// The renderer tells us when the catalog becomes dirty/clean and when it
+// starts a new or closes the current document; we own the path and title.
+ipcMain.handle('doc:set-dirty', (_, d) => { docDirty = !!d; applyDocState(); return true; });
+ipcMain.handle('doc:new',   () => { currentPath = null; docDirty = false; applyDocState(); return true; });
+ipcMain.handle('doc:close', () => { currentPath = null; docDirty = false; applyDocState(); return true; });
+
+// Called once the UI is wired: returns a file the OS asked us to open, if any.
+ipcMain.handle('doc:ready', () => {
+  rendererReady = true;
+  const p = pendingOpenPath;
+  pendingOpenPath = null;
+  return p;
+});
+
+// The renderer has finished saving on the way out (or gave up).
+ipcMain.handle('window:force-close', (_, ok) => {
+  if (ok === false) return true;   // save failed/cancelled → stay open
+  forceClose = true;
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.close();
   return true;
 });
 ipcMain.handle('shell:external', (_, url) => {
@@ -141,46 +296,89 @@ ipcMain.handle('shell:external', (_, url) => {
   return true;
 });
 
-ipcMain.handle('catalog:export', async (_, catalog) => {
+// ─────────────────────────────────────────────────────────────
+// CATALOG FILES — open / save / save as
+// .archivo is gzip-compressed JSON; a plain .json catalog is read
+// transparently (gzip magic bytes) and written uncompressed if the
+// user explicitly picks the .json filter.
+// ─────────────────────────────────────────────────────────────
+function readCatalogFile(filePath) {
+  const buf = fs.readFileSync(filePath);
+  const raw = (buf.length > 2 && buf[0] === 0x1f && buf[1] === 0x8b)
+    ? zlib.gunzipSync(buf).toString('utf8')
+    : buf.toString('utf8');
+  const data = JSON.parse(raw);
+  if (!Array.isArray(data.disks)) throw new Error('Invalid catalog format');
+  return data;
+}
+
+// Write through a temp file in the same folder, then rename: an interrupted
+// save can never truncate the catalog you already had on disk.
+function writeCatalogFile(filePath, catalog) {
+  const json = JSON.stringify(catalog);
+  const body = filePath.toLowerCase().endsWith('.json')
+    ? Buffer.from(json, 'utf8')
+    : zlib.gzipSync(Buffer.from(json, 'utf8'), { level: 9 });
+  const tmp = filePath + '.tmp-' + process.pid;
+  fs.writeFileSync(tmp, body);
+  fs.renameSync(tmp, filePath);
+  return filePath;
+}
+
+function defaultSaveDir() {
+  try {
+    const d = app.getPath('documents');
+    if (d && fs.existsSync(d)) return d;
+  } catch (e) {}
+  return os.homedir();
+}
+
+// path optional: when given (double-click, recents, drag & drop) no dialog.
+ipcMain.handle('catalog:open', async (_, filePath) => {
+  let fp = filePath;
+  if (!fp) {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      title:      'Open archivo Catalog',
+      filters:    [{ name: 'archivo Catalog', extensions: ['archivo','json','gz'] }],
+      properties: ['openFile']
+    });
+    if (canceled || !filePaths.length) return null;
+    fp = filePaths[0];
+  }
+  const data = readCatalogFile(fp);
+  currentPath = fp;
+  docDirty    = false;
+  applyDocState();
+  addRecent(fp);
+  return { path: fp, data };
+});
+
+// Save in place. Returns { needsPath:true } when the catalog was never saved.
+ipcMain.handle('catalog:save', async (_, catalog) => {
+  if (!currentPath) return { needsPath: true };
+  writeCatalogFile(currentPath, catalog);
+  docDirty = false;
+  applyDocState();
+  addRecent(currentPath);
+  return { path: currentPath };
+});
+
+ipcMain.handle('catalog:save-as', async (_, { catalog, suggestedName }) => {
   const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
-    title:       'Save archivo Database',
-    defaultPath: path.join(os.homedir(), 'Desktop', 'archivo_catalog.archivo'),
+    title:       'Save archivo Catalog',
+    defaultPath: currentPath || path.join(defaultSaveDir(), suggestedName || 'archivo_catalog.archivo'),
     filters:     [
-      { name: 'archivo Database (compressed)', extensions: ['archivo'] },
+      { name: 'archivo Catalog (compressed)', extensions: ['archivo'] },
       { name: 'JSON (uncompressed)', extensions: ['json'] },
     ]
   });
   if (canceled || !filePath) return null;
-  const json = JSON.stringify(catalog);
-  if (filePath.toLowerCase().endsWith('.json')) {
-    // Plain JSON if the user explicitly chose .json
-    fs.writeFileSync(filePath, json, 'utf8');
-  } else {
-    // Default: gzip-compressed .archivo
-    const gz = zlib.gzipSync(Buffer.from(json, 'utf8'), { level: 9 });
-    fs.writeFileSync(filePath, gz);
-  }
-  return filePath;
-});
-
-ipcMain.handle('catalog:import', async () => {
-  const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
-    title:      'Open archivo Database',
-    filters:    [{ name: 'archivo Database', extensions: ['archivo','json','gz'] }],
-    properties: ['openFile']
-  });
-  if (canceled || !filePaths.length) return null;
-  const buf = fs.readFileSync(filePaths[0]);
-  let raw;
-  // gzip magic bytes: 0x1f 0x8b
-  if (buf.length > 2 && buf[0] === 0x1f && buf[1] === 0x8b) {
-    raw = zlib.gunzipSync(buf).toString('utf8');
-  } else {
-    raw = buf.toString('utf8');
-  }
-  const data = JSON.parse(raw);
-  if (!Array.isArray(data.disks)) throw new Error('Invalid catalog format');
-  return data;
+  writeCatalogFile(filePath, catalog);
+  currentPath = filePath;
+  docDirty    = false;
+  applyDocState();
+  addRecent(filePath);
+  return { path: filePath };
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -624,3 +822,93 @@ ipcMain.handle('shell:reveal', (_, filePath) => {
 ipcMain.handle('shell:open', (_, filePath) => {
   shell.openPath(filePath);
 });
+
+// ─────────────────────────────────────────────────────────────
+// APPLICATION MENU
+// Every command is forwarded to the renderer, which owns the catalog
+// and the unsaved-changes guard. Rebuilt whenever the recents change.
+// ─────────────────────────────────────────────────────────────
+function sendMenu(cmd, arg) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('menu:command', { cmd, arg });
+  }
+}
+
+function buildMenu() {
+  const isMac   = process.platform === 'darwin';
+  const recents = getRecents();
+
+  const recentItems = recents.length
+    ? recents.map(p => ({
+        label:   path.basename(p),
+        toolTip: p,
+        click:   () => requestOpen(p),
+      })).concat([
+        { type: 'separator' },
+        { label: 'Clear Menu', click: () => clearRecents() },
+      ])
+    : [{ label: 'No Recent Catalogs', enabled: false }];
+
+  const template = [
+    ...(isMac ? [{
+      label: 'archivo',
+      submenu: [
+        { label: 'About archivo', click: () => sendMenu('about') },
+        { label: 'Check for Updates…', click: () => checkForUpdate(true) },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' }, { role: 'hideOthers' }, { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ]
+    }] : []),
+    {
+      label: 'File',
+      submenu: [
+        { label: 'New Catalog',   accelerator: 'CmdOrCtrl+N', click: () => sendMenu('new') },
+        { label: 'Open Catalog…', accelerator: 'CmdOrCtrl+O', click: () => sendMenu('open') },
+        { label: 'Open Recent', submenu: recentItems },
+        { type: 'separator' },
+        { label: 'Add Disk…', accelerator: 'CmdOrCtrl+D', click: () => sendMenu('add-disk') },
+        { type: 'separator' },
+        { label: 'Save',     accelerator: 'CmdOrCtrl+S',       click: () => sendMenu('save') },
+        { label: 'Save As…', accelerator: 'Shift+CmdOrCtrl+S', click: () => sendMenu('save-as') },
+        { type: 'separator' },
+        { label: 'Export…', accelerator: 'CmdOrCtrl+E', click: () => sendMenu('export') },
+        { type: 'separator' },
+        { label: 'Close Catalog', accelerator: 'Shift+CmdOrCtrl+W', click: () => sendMenu('close-doc') },
+        isMac ? { role: 'close', label: 'Close Window' } : { role: 'quit', label: 'Quit archivo' },
+      ]
+    },
+    { role: 'editMenu' },
+    {
+      label: 'View',
+      submenu: [
+        { label: 'Find',             accelerator: 'CmdOrCtrl+F', click: () => sendMenu('focus-search') },
+        { label: 'Toggle Inspector', accelerator: 'CmdOrCtrl+I', click: () => sendMenu('toggle-inspector') },
+        { type: 'separator' },
+        { role: 'reload' }, { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+      ]
+    },
+    { role: 'windowMenu' },
+    {
+      role: 'help',
+      submenu: [
+        { label: 'archivo on GitHub', click: () => shell.openExternal(REPO_URL) },
+        { label: 'Report an Issue',   click: () => shell.openExternal(REPO_URL + '/issues') },
+        ...(isMac ? [] : [
+          { type: 'separator' },
+          { label: 'Check for Updates…', click: () => checkForUpdate(true) },
+          { label: 'About archivo',      click: () => sendMenu('about') },
+        ]),
+      ]
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}

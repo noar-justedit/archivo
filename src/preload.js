@@ -16,11 +16,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 'use strict';
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('archivo', {
-  exportCatalog:  (catalog) => ipcRenderer.invoke('catalog:export', catalog),
-  importCatalog:  ()       => ipcRenderer.invoke('catalog:import'),
+  // ── Document: open / save / save as ──
+  // openCatalog() with no path shows the file dialog; with a path it opens
+  // straight away (double-click, Open Recent, drag & drop).
+  openCatalog:    p        => ipcRenderer.invoke('catalog:open', p),
+  saveCatalog:    catalog  => ipcRenderer.invoke('catalog:save', catalog),
+  saveCatalogAs:  opts     => ipcRenderer.invoke('catalog:save-as', opts),
+  newDocument:    ()       => ipcRenderer.invoke('doc:new'),
+  closeDocument:  ()       => ipcRenderer.invoke('doc:close'),
+  setDirty:       d        => ipcRenderer.invoke('doc:set-dirty', d),
+  docReady:       ()       => ipcRenderer.invoke('doc:ready'),
+  forceClose:     ok       => ipcRenderer.invoke('window:force-close', ok),
+
+  recents:        ()       => ipcRenderer.invoke('recents:list'),
+  clearRecents:   ()       => ipcRenderer.invoke('recents:clear'),
+
+  // Electron 32+ removed File.path — this is the sanctioned replacement.
+  pathForFile:    file     => { try { return webUtils.getPathForFile(file) || ''; } catch (e) { return ''; } },
+
+  onMenuCommand:  cb       => ipcRenderer.on('menu:command',     (_, d) => cb(d)),
+  onOpenRequest:  cb       => ipcRenderer.on('doc:open-request', (_, p) => cb(p)),
+
   exportText:     opts     => ipcRenderer.invoke('export:text', opts),
   exportHtml:     opts     => ipcRenderer.invoke('export:html', opts),
 
@@ -40,6 +59,7 @@ contextBridge.exposeInMainWorld('archivo', {
   savePrefs:      prefs    => ipcRenderer.invoke('prefs:save', prefs),
   openExternal:   url      => ipcRenderer.invoke('shell:external', url),
   onUpdateAvailable: cb    => { ipcRenderer.on('update-available', (_, d) => cb(d)); return () => ipcRenderer.removeAllListeners('update-available'); },
+  onUpdateNone:      cb    => ipcRenderer.on('update-none', (_, d) => cb(d)),
 
   platform: process.platform,
 });

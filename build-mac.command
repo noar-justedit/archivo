@@ -4,6 +4,7 @@
 # ╚══════════════════════════════════════════════════════════════╝
 
 set -e
+set -o pipefail   # a failure inside a pipe must not be swallowed
 trap 'echo; read -p "Press Enter to close this window..." _' EXIT
 
 RED='\033[0;31m'
@@ -48,17 +49,26 @@ echo -e "${GREEN}✓ Dependencies installed${NC}"
 # ── 4. Build ────────────────────────────────────────────────────
 echo -e "${BLUE}[4/4]${NC} Building ARCHIVO for macOS arm64…"
 echo ""
-npm run build:mac 2>&1 | grep -v "^>" | tail -20
+if ! npm run build:mac 2>&1 | grep -v "^>" | tail -20; then
+  echo ""
+  echo -e "${RED}X Build failed. Scroll up for the electron-builder error.${NC}"
+  exit 1
+fi
 
 # ── Résultat ────────────────────────────────────────────────────
 DMG=$(find dist -name "*.dmg" 2>/dev/null | head -1)
-APP=$(find dist -name "ARCHIVO.app" -maxdepth 5 2>/dev/null | head -1)
+APP=$(find dist -maxdepth 5 -name "archivo.app" 2>/dev/null | head -1)
 
 echo ""
 echo -e "${BOLD}${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BOLD}${GREEN}              BUILD SUCCESSFUL! 🎉                    ${NC}"
 echo -e "${BOLD}${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
+
+if [ -z "$DMG" ]; then
+  echo -e "${RED}X No .dmg produced — the build did not complete.${NC}"
+  exit 1
+fi
 
 if [ -n "$DMG" ]; then
   SIZE=$(du -sh "$DMG" 2>/dev/null | cut -f1)
@@ -72,7 +82,7 @@ fi
 
 echo ""
 echo -e "${CYAN}To install:${NC}"
-echo -e "  Drag ARCHIVO.app to /Applications"
+echo -e "  Drag archivo.app to /Applications"
 echo -e "  Or double-click the .dmg"
 echo ""
 

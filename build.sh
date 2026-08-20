@@ -12,6 +12,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -e
+set -o pipefail   # a failure inside a pipe must not be swallowed
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 APP="ARCHIVO"
@@ -61,9 +62,13 @@ PYEOF
   done
   iconutil -c icns build/icon.iconset -o build/icon.icns
   rm -rf build/icon.iconset build/tmp_*.png
-  # ICO pour Windows
-  cp build/icon.icns build/icon.ico 2>/dev/null || true
-  echo "  ✓ Icons ready"
+  echo "  ✓ icon.icns ready"
+  # NOTE: build/icon.ico is NOT generated here. An .icns renamed to .ico is
+  # not a valid ICO and electron-builder fails on it. Both icons are committed
+  # to the repo; if icon.ico is ever missing, regenerate it from the artwork.
+  if [ ! -f "build/icon.ico" ]; then
+    echo "  ! build/icon.ico missing — Windows builds will fail until it is restored."
+  fi
 fi
 
 if [[ "$1" == "--dev" ]]; then

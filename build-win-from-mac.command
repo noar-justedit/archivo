@@ -6,6 +6,7 @@
 # ============================================================
 
 set -e
+set -o pipefail   # a failure inside a pipe must not be swallowed
 trap 'echo; read -p "Press Enter to close this window..." _' EXIT
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'

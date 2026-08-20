@@ -396,6 +396,26 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
 .wbg{padding:10px;background:transparent;border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);cursor:pointer;width:100%;}
 .wbg:hover{border-color:var(--bd3);color:var(--tx);}
 
+/* ── RECENT CATALOGS (welcome screen) ── */
+#recent-list{margin-top:22px;text-align:left;}
+.rc-h{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dm);margin-bottom:8px;padding-left:2px;}
+.rc{display:block;padding:7px 9px;border-radius:var(--r);cursor:pointer;border:1px solid transparent;}
+.rc:hover{background:var(--bd);border-color:var(--bd2);}
+.rc-n{display:block;font-size:13px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rc-p{display:block;font-family:var(--mono);font-size:10px;color:var(--dm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left;}
+.rc-clear{margin-top:6px;background:none;border:none;color:var(--dm);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;padding:4px 2px;}
+.rc-clear:hover{color:var(--tx);}
+
+/* ── DRAG & DROP OVERLAY ── */
+#dropzone{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;background:rgba(10,10,14,.82);pointer-events:none;}
+body.dragging #dropzone{display:flex;}
+.dz-box{border:2px dashed var(--v);border-radius:10px;padding:34px 46px;text-align:center;background:var(--panel);}
+.dz-t{font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx);}
+.dz-s{font-family:var(--mono);font-size:11px;color:var(--dm);margin-top:6px;}
+
+/* Edited marker in the title bar */
+#tb-dbname .dot{color:var(--v);margin-right:5px;}
+
 /* ── TOASTS ── */
 #toasts{position:fixed;bottom:28px;right:16px;z-index:9999;display:flex;flex-direction:column-reverse;gap:5px;}
 .toast{padding:8px 14px;background:var(--card);border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--mono);font-size:12px;color:var(--mu);animation:tIn .15s ease;max-width:340px;}
@@ -416,11 +436,20 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="wb">
     <img src="assets/app-icon.png" class="welcome-icon" alt="" />
     <div class="wt">archivo</div>
-    <div class="ws">v1.2.0 · Hard Disk Catalog</div>
+    <div class="ws" id="welcome-ver">v1.3.0 · Hard Disk Catalog</div>
     <div class="wbtns">
-      <button class="wbp" id="btn-load-db">📂 Open Database</button>
-      <button class="wbg" id="btn-start-empty">Start empty catalog</button>
+      <button class="wbp" id="btn-load-db">📂 Open Catalog</button>
+      <button class="wbg" id="btn-start-empty">New empty catalog</button>
     </div>
+    <div id="recent-list"></div>
+  </div>
+</div>
+
+<!-- DRAG & DROP -->
+<div id="dropzone">
+  <div class="dz-box">
+    <div class="dz-t">Drop to open</div>
+    <div class="dz-s">.archivo catalog file</div>
   </div>
 </div>
 
@@ -441,15 +470,15 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="tsep"></div>
   <div class="btn" id="btn-import">
     <div class="btn-ic">📂</div>
-    <div class="btn-lb">Open Database</div>
+    <div class="btn-lb">Open Catalog</div>
   </div>
   <div class="btn" id="btn-export">
     <div class="btn-ic">💾</div>
-    <div class="btn-lb">Save Database</div>
+    <div class="btn-lb">Save Catalog</div>
   </div>
   <div class="btn" id="btn-close">
     <div class="btn-ic">✕</div>
-    <div class="btn-lb">Close Database</div>
+    <div class="btn-lb">Close Catalog</div>
   </div>
   <div class="tsep"></div>
   <div class="btn" id="btn-export-data">
@@ -516,7 +545,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
 
 <!-- STATUS BAR -->
 <div id="sb">
-  <span class="sb-ver" id="sb-ver">v1.2.0</span>
+  <span class="sb-ver" id="sb-ver">v1.3.0</span>
   <a class="sb-link" id="sb-github">GitHub</a>
   <a class="sb-link" id="sb-about">About</a>
   <span style="color:var(--bd2)">|</span>
@@ -529,7 +558,7 @@ input,textarea,#search-inp{-webkit-user-select:text!important;user-select:text!i
   <div class="about-card">
     <img src="assets/app-icon.png" class="about-icon" alt="" />
     <div class="about-name">archivo</div>
-    <div class="about-ver" id="about-ver">v1.2.0</div>
+    <div class="about-ver" id="about-ver">v1.3.0</div>
     <div class="about-desc">Catalogue your archive drives once, search them all offline.</div>
     <div class="about-gpl">
       Free software under the <strong>GNU General Public License v3</strong>.<br>
@@ -663,6 +692,11 @@ let pendingVol  = null;
 let hideSystem  = false; // filter toggles in Add Disk modal
 let hideNetwork = false;
 
+// ── Document state ──
+let docPath     = null;  // file the catalog was opened from / saved to (null = never saved)
+let docOpen     = false; // a catalog is open (vs. the welcome screen)
+let dirty       = false; // unsaved changes since the last save
+
 const V  = new Set(['mp4','mov','avi','mkv','mxf','r3d','braw','mts','m2ts','wmv','prproj','drp','fcpbundle','aaf']);
 const I  = new Set(['jpg','jpeg','png','tif','tiff','raw','cr2','nef','arw','psd','ai','eps','svg','gif','webp','dpx','exr','heic']);
 const A  = new Set(['mp3','wav','aiff','aif','flac','aac','m4a','ogg']);
@@ -772,6 +806,8 @@ function wireKeyboard() {
   wireColResize();
   wireCtxMenu();
   wireKeyboard();
+  wireMenu();
+  wireDragDrop();
   startApp();
   initUpdatesAndPrefs();
 })();
@@ -783,6 +819,7 @@ async function initUpdatesAndPrefs() {
       const vtxt = 'v' + (appVersion || '');
       const sv = g('sb-ver'); if (sv) sv.textContent = vtxt;
       const av = g('about-ver'); if (av) av.textContent = vtxt;
+      const wv = g('welcome-ver'); if (wv) wv.textContent = vtxt + ' · Hard Disk Catalog';
       const prefs = await window.archivo.loadPrefs();
       dismissedUpdateVersion = (prefs && prefs.dismissedUpdateVersion) || '';
       window.archivo.onUpdateAvailable(showUpdateNotice);
@@ -875,12 +912,12 @@ function showUpdateNotice({ version, url }) {
 ════════════════════════════════════════════════ */
 function wireButtons() {
   // Welcome
-  g('btn-load-db').addEventListener('click',    importCatalog);
-  g('btn-start-empty').addEventListener('click', startEmpty);
+  g('btn-load-db').addEventListener('click',     () => openCatalog());
+  g('btn-start-empty').addEventListener('click', () => newCatalog());
   // Toolbar
   g('btn-add-disk').addEventListener('click',   showAddDisk);
-  g('btn-import').addEventListener('click',     importCatalog);
-  g('btn-export').addEventListener('click',     exportCatalog);
+  g('btn-import').addEventListener('click',     () => openCatalog());
+  g('btn-export').addEventListener('click',     () => saveCatalog());
   g('btn-close').addEventListener('click',      closeDatabase);
 
   // Footer: GitHub link + About modal
@@ -994,6 +1031,76 @@ function wireColResize() {
   });
 }
 
+/* ════════════════════════════════════════════════
+   APPLICATION MENU BRIDGE
+   Keyboard shortcuts live in the native menu (main.js); every command
+   lands here so the renderer keeps ownership of the catalog.
+════════════════════════════════════════════════ */
+function wireMenu() {
+  if (!window.archivo || !window.archivo.onMenuCommand) return;
+  window.archivo.onMenuCommand(async ({ cmd, arg }) => {
+    switch (cmd) {
+      case 'new':       newCatalog(); break;
+      case 'open':      openCatalog(); break;
+      case 'open-path': openCatalog(arg); break;
+      case 'save':      saveCatalog(); break;
+      case 'save-as':   saveCatalogAs(); break;
+      case 'close-doc': closeDatabase(); break;
+      case 'add-disk':  if (docOpen) showAddDisk(); break;
+      case 'export':    if (docOpen && DB.disks.length) g('exp-ov').classList.add('open'); break;
+      case 'about':     openAbout(); break;
+      case 'toggle-inspector': if (docOpen) toggleInspector(); break;
+      case 'focus-search':     { const i = g('search-inp'); if (i) { i.focus(); i.select(); } break; }
+      // The window is closing and the catalog is dirty: save, then let go.
+      case 'save-and-close': {
+        const ok = await saveCatalog();
+        try { await window.archivo.forceClose(ok); } catch (e) {}
+        break;
+      }
+    }
+  });
+  if (window.archivo.onUpdateNone) {
+    window.archivo.onUpdateNone(d => {
+      toast(d && d.failed ? 'Update check failed — check your connection.'
+                          : 'archivo is up to date (v' + (appVersion || '') + ').',
+            d && d.failed ? 'err' : 'ok');
+    });
+  }
+}
+
+/* ════════════════════════════════════════════════
+   DRAG & DROP — drop a .archivo file anywhere to open it
+════════════════════════════════════════════════ */
+function wireDragDrop() {
+  let depth = 0;
+  const isFileDrag = e => Array.from(e.dataTransfer?.types || []).includes('Files');
+
+  document.addEventListener('dragenter', e => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    depth++;
+    document.body.classList.add('dragging');
+  });
+  document.addEventListener('dragover', e => { if (isFileDrag(e)) e.preventDefault(); });
+  document.addEventListener('dragleave', e => {
+    if (!isFileDrag(e)) return;
+    if (--depth <= 0) { depth = 0; document.body.classList.remove('dragging'); }
+  });
+  document.addEventListener('drop', e => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    depth = 0;
+    document.body.classList.remove('dragging');
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!file) return;
+    let p = '';
+    try { p = window.archivo.pathForFile(file) || ''; } catch (err) {}
+    if (!p) { toast('Could not read the dropped file.', 'err'); return; }
+    if (!/\.(archivo|json|gz)$/i.test(p)) { toast('Drop an .archivo catalog file.', 'err'); return; }
+    openCatalog(p);
+  });
+}
+
 function wireCtxMenu() {
   // Close ctx menu on any click outside it — but never intercept input clicks
   document.body.addEventListener('click', e => {
@@ -1014,69 +1121,157 @@ async function startApp() {
       return;
     }
   }
-  // Always start empty — no auto-loading of any previous database.
-  // The user explicitly opens or creates a database from the welcome screen.
+  // Always start on the welcome screen — unless the OS handed us a file to
+  // open (double-clicked .archivo, "Open With", drag onto the app icon).
   DB = { disks: [] };
+  docPath = null; docOpen = false; dirty = false;
   showWelcome();
+  refreshRecents();
 
   // Scan progress events
   window.archivo.onScanProgress(p => {
     updateScanProgress(p);
   });
+
+  // Files the OS asks us to open, now and later.
+  window.archivo.onOpenRequest(p => { if (p) openCatalog(p); });
+  let launchFile = null;
+  try { launchFile = await window.archivo.docReady(); } catch (e) {}
+  if (launchFile) openCatalog(launchFile);
 }
 
 /* ════════════════════════════════════════════════
    WELCOME
 ════════════════════════════════════════════════ */
-function showWelcome() { g('welcome').style.display = 'flex'; }
+function showWelcome() { g('welcome').style.display = 'flex'; refreshRecents(); }
 function hideWelcome() { g('welcome').style.display = 'none'; }
-function startEmpty()  { hideWelcome(); DB = { disks:[] }; selected=null; expanded.clear(); refreshAll(); updatePathBar(); toast('Empty catalog. Add a disk to begin.','info'); }
 
-function closeDatabase() {
-  if (DB.disks.length === 0) { showWelcome(); return; }
-  showModal('Close Database',
-    'Close the current database?<br>Unsaved changes will be lost. Use <strong>Save Database</strong> first to keep your work.',
+async function refreshRecents() {
+  const el = g('recent-list');
+  if (!el || !window.archivo || !window.archivo.recents) return;
+  let list = [];
+  try { list = await window.archivo.recents(); } catch (e) { list = []; }
+  if (!list.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="rc-h">Recent</div>' +
+    list.slice(0, 5).map(p =>
+      '<div class="rc" data-p="' + esc(p) + '" title="' + esc(p) + '">' +
+        '<span class="rc-n">' + esc(p.split(/[\\/]/).pop()) + '</span>' +
+        '<span class="rc-p">' + esc(p) + '</span>' +
+      '</div>').join('') +
+    '<button class="rc-clear" id="rc-clear">Clear list</button>';
+  el.querySelectorAll('.rc').forEach(x =>
+    x.addEventListener('click', () => openCatalog(x.dataset.p)));
+  const cl = g('rc-clear');
+  if (cl) cl.addEventListener('click', async () => {
+    try { await window.archivo.clearRecents(); } catch (e) {}
+    refreshRecents();
+  });
+}
+
+/* ════════════════════════════════════════════════
+   DOCUMENT — new / open / save / save as / close
+   One catalog is open at a time. `dirty` tracks unsaved changes; every
+   mutation calls markDirty(), and anything that would throw the catalog
+   away goes through guardUnsaved() first.
+════════════════════════════════════════════════ */
+function docName() { return docPath ? docPath.split(/[\\/]/).pop() : 'Untitled catalog'; }
+
+function updateTitleBar() {
+  const el = g('tb-dbname');
+  if (!el) return;
+  if (!docOpen) { el.textContent = 'No catalog loaded'; return; }
+  const n = DB.disks.length;
+  el.innerHTML = (dirty ? '<span class="dot">●</span>' : '') +
+    esc(docName()) + ' · ' + n + ' disk' + (n !== 1 ? 's' : '');
+}
+
+function markDirty() {
+  if (!dirty) { dirty = true; try { window.archivo.setDirty(true); } catch (e) {} }
+  updateTitleBar();
+}
+function markClean() {
+  dirty = false;
+  try { window.archivo.setDirty(false); } catch (e) {}
+  updateTitleBar();
+}
+
+// Run `next` only once the user has dealt with unsaved changes.
+function guardUnsaved(next) {
+  if (!dirty) { next(); return; }
+  showModal('Unsaved changes',
+    'Save changes to <strong>' + esc(docName()) + '</strong> before continuing?<br>' +
+    '<span style="color:var(--dm);font-size:12px;">If you don\'t save, your changes will be lost.</span>',
     [
-      {label:'Cancel', cls:'btn-g', fn:hideModal},
-      {label:'Close',  cls:'btn-r', fn:()=>{
-        DB = { disks:[] }; selected=null; expanded.clear();
-        hideModal();
-        renderTree(); updateInsp(); updateSB(); updatePathBar();
-        g('tb-dbname').textContent = 'No catalog loaded';
-        showWelcome();
-      }},
+      { label:"Don't Save", cls:'btn-r', fn:()=>{ hideModal(); markClean(); next(); } },
+      { label:'Cancel',     cls:'btn-g', fn:hideModal },
+      { label:'Save',       cls:'btn-p', fn:async()=>{ hideModal(); if (await saveCatalog()) next(); } },
     ]);
 }
 
-/* ════════════════════════════════════════════════
-   IMPORT / EXPORT
-════════════════════════════════════════════════ */
-async function importCatalog() {
-  try {
-    const data = await window.archivo.importCatalog();
-    if (!data) return;
-    DB = data;
-    selected = null; expanded.clear();
-    hideWelcome();
-    refreshAll();
-    g('tb-dbname').textContent = 'Database open · ' + DB.disks.length + ' disk(s)';
-    toast('Opened ' + DB.disks.length + ' disk(s).', 'ok');
-  } catch(e) { toast('Open error: ' + e, 'err'); }
-}
-async function exportCatalog() {
-  if (!DB || !DB.disks || !DB.disks.length) { toast('Nothing to save. Add a disk first.', 'err'); return; }
-  try {
-    const dest = await window.archivo.exportCatalog(DB);
-    if (dest) {
-      g('tb-dbname').textContent = 'Saved · ' + DB.disks.length + ' disk(s)';
-      toast('Saved to ' + dest, 'ok');
-    }
-  } catch(e) { toast('Save error: ' + e, 'err'); }
+function newCatalog() {
+  guardUnsaved(async () => {
+    try { await window.archivo.newDocument(); } catch (e) {}
+    DB = { disks: [] };
+    docPath = null; docOpen = true;
+    selected = null; expanded.clear(); clearSearch();
+    hideWelcome(); refreshAll(); updatePathBar(); markClean();
+    toast('New catalog. Add a disk to begin.', 'info');
+  });
 }
 
-/* ════════════════════════════════════════════════
-   SAVE
-════════════════════════════════════════════════ */
+// filePath omitted → file dialog. Given → opens straight away.
+function openCatalog(filePath) {
+  guardUnsaved(async () => {
+    try {
+      const res = await window.archivo.openCatalog(filePath || undefined);
+      if (!res) return;
+      DB = res.data;
+      docPath = res.path; docOpen = true;
+      selected = null; expanded.clear(); clearSearch();
+      hideWelcome(); refreshAll(); updatePathBar(); markClean();
+      toast('Opened ' + DB.disks.length + ' disk(s).', 'ok');
+    } catch (e) { toast('Open error: ' + e, 'err'); }
+  });
+}
+
+// Save in place when the catalog has a file; otherwise fall through to Save As.
+async function saveCatalog() {
+  if (!docOpen) { toast('No catalog open.', 'err'); return false; }
+  try {
+    const res = await window.archivo.saveCatalog(DB);
+    if (res && res.needsPath) return await saveCatalogAs();
+    if (!res || !res.path) return false;
+    docPath = res.path; markClean(); refreshRecents();
+    toast('Saved · ' + docName(), 'ok');
+    return true;
+  } catch (e) { toast('Save error: ' + e, 'err'); return false; }
+}
+
+async function saveCatalogAs() {
+  if (!docOpen) { toast('No catalog open.', 'err'); return false; }
+  try {
+    const base = docName().replace(/\.(archivo|json|gz)$/i, '');
+    const res  = await window.archivo.saveCatalogAs({
+      catalog: DB,
+      suggestedName: (base === 'Untitled catalog' ? 'archivo_catalog' : base) + '.archivo',
+    });
+    if (!res || !res.path) return false;
+    docPath = res.path; markClean(); refreshRecents();
+    toast('Saved · ' + docName(), 'ok');
+    return true;
+  } catch (e) { toast('Save error: ' + e, 'err'); return false; }
+}
+
+function closeDatabase() {
+  guardUnsaved(async () => {
+    try { await window.archivo.closeDocument(); } catch (e) {}
+    DB = { disks: [] };
+    docPath = null; docOpen = false;
+    selected = null; expanded.clear(); clearSearch();
+    renderTree(); updateInsp(); updateSB(); updatePathBar(); markClean();
+    showWelcome();
+  });
+}
 /* ════════════════════════════════════════════════
    REFRESH
 ════════════════════════════════════════════════ */
@@ -1085,6 +1280,7 @@ function refreshAll() {
   buildIndex();
   updateSB();
   updateInsp();
+  updateTitleBar();
 }
 
 /* ════════════════════════════════════════════════
@@ -1116,7 +1312,7 @@ function renderTree() {
   if (!DB.disks.length) {
     body.innerHTML = '<div class="empty"><div style="font-size:40px;opacity:.15">🗄</div><div>No disks in catalog</div><div style="display:flex;gap:8px;margin-top:6px;"><button class="cta" id="et-add">＋ Add Disk</button><button class="cta2" id="et-import">Import</button></div></div>';
     g('et-add').addEventListener('click', showAddDisk);
-    g('et-import').addEventListener('click', importCatalog);
+    g('et-import').addEventListener('click', () => openCatalog());
     return;
   }
   const rows = [];
@@ -1341,11 +1537,12 @@ function updateInsp() {
 async function saveName(diskId) {
   const d=DB.disks.find(x=>x.id===diskId); if(!d)return;
   const v=g('in-name')?.value.trim();
-  if(v&&v!==d.label){d.label=v;renderTree();toast('Renamed.','ok');}
+  if(v&&v!==d.label){d.label=v;markDirty();renderTree();toast('Renamed.','ok');}
 }
 async function saveNote(diskId) {
   const d=DB.disks.find(x=>x.id===diskId); if(!d)return;
   d.note=g('in-note')?.value||'';
+  markDirty();
   renderTree(); toast('Note saved.','ok');
 }
 function toggleInspector() {
@@ -1578,6 +1775,7 @@ function commitNewDisk(scanData, fileCount) {
     tree:       scanData.tree,
   };
   DB.disks.push(disk);
+  markDirty();
   hideAddDisk();
   expanded.add(disk.id);
   refreshAll();
@@ -1598,6 +1796,7 @@ function commitUpdateDisk(existing, scanData, fileCount) {
   existing.scanned    = new Date().toISOString();
   existing.file_count = fileCount;
   existing.tree       = scanData.tree;
+  markDirty();
   hideAddDisk();
   expanded.add(existing.id);
   refreshAll();
@@ -1704,6 +1903,7 @@ function deleteSelected() {
     {label:'Remove',cls:'btn-r',fn:async()=>{
       DB.disks=DB.disks.filter(x=>x.id!==d.id);
       expanded.delete(d.id); selected=null;
+      markDirty();
       refreshAll(); hideModal();
       toast('"'+d.label+'" removed.','ok');
     }},
