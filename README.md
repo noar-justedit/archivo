@@ -94,6 +94,45 @@ chmod +x build*.sh build*.command
 ./build-win-from-mac.command
 ```
 
+### Signing and notarization (macOS)
+
+Release builds are signed with a Developer ID certificate and notarized by
+Apple, so the DMG opens on any Mac with no Gatekeeper warning.
+`build-mac.command` does all of it:
+
+```bash
+./build-mac.command
+```
+
+It checks the certificate, checks (or sets up) the Apple credentials, builds,
+notarizes, staples the ticket to the DMG and verifies the result — then tells
+you whether the DMG is safe to upload. It refuses to finish on anything that
+would produce an undistributable build.
+
+The first run asks for your Apple ID and an app-specific password (create one
+at appleid.apple.com → Sign-In and Security → App-Specific Passwords). The
+Team ID is read from your certificate. Everything is stored in the macOS
+keychain under the profile name `archivo-notarization`; no password, key or
+certificate is ever written into this repository. Later runs ask nothing.
+
+Notarization uploads the app to Apple and waits for a verdict, usually 2 to
+15 minutes of silence. For a quick local build, skip it:
+
+```bash
+./build-mac.command --quick      # signed, not notarized
+./build-mac.command --unsigned   # neither — local testing only
+./build-mac.command --setup      # re-enter the Apple credentials
+```
+
+Apple is contacted twice: once for the app (electron-builder does this and
+staples the ticket into the bundle) and once for the finished disk image, which
+has to be submitted on its own before it can be stapled. If the disk image step
+fails the build is still usable — the app inside carries its own ticket and
+launches without a warning — and the script says so instead of stopping.
+
+Full build output is kept in `build-mac.log`. If Apple rejects something, the
+script fetches and prints the reason automatically.
+
 Building the Windows target from macOS requires Homebrew and Wine; the
 `build-win-from-mac.command` script checks for them and guides the install.
 The NSIS installer cross-builds cleanly; the *portable* `.exe` additionally
@@ -112,7 +151,7 @@ archivo/
 │   ├── assets/        App icon
 │   └── fonts/         Poppins (OFL)
 ├── test/smoke.js      Headless test of the document model (npm test)
-├── build/             Packaging icons (icon.icns, icon.ico)
+├── build/             Packaging icons + entitlements.mac.plist
 ├── build-mac.command   macOS build (double-click in Finder)
 ├── build-win.bat      Windows build (on Windows)
 ├── build-win-from-mac.command  Windows build from macOS via Wine

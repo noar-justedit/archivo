@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <!--
+      Entitlements for the hardened runtime, required for notarization.
+      These three are what Electron itself needs: V8 compiles JavaScript at
+      runtime, which the hardened runtime blocks by default.
+      archivo is NOT sandboxed, so no file-access entitlements are needed —
+      access to archive drives is granted by the user through the usual macOS
+      permission prompts (see the NS*UsageDescription strings in package.json).
+    -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+  </dict>
+</plist>

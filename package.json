@@ -1,6 +1,6 @@
 {
   "name": "archivo",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Hard Disk Catalog",
   "main": "src/main.js",
   "scripts": {
@@ -53,10 +53,25 @@
         }
       ],
       "hardenedRuntime": true,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": true,
+      "extendInfo": {
+        "NSRemovableVolumesUsageDescription": "archivo needs access to your external drives to catalog what is on them.",
+        "NSNetworkVolumesUsageDescription": "archivo needs access to network volumes to catalog what is on them.",
+        "NSDesktopFolderUsageDescription": "archivo needs access to your Desktop to open and save catalog files stored there.",
+        "NSDocumentsFolderUsageDescription": "archivo needs access to your Documents folder to open and save catalog files stored there.",
+        "NSDownloadsFolderUsageDescription": "archivo needs access to your Downloads folder to open and save catalog files stored there.",
+        "NSCameraUsageDescription": null,
+        "NSMicrophoneUsageDescription": null,
+        "NSBluetoothAlwaysUsageDescription": null,
+        "NSBluetoothPeripheralUsageDescription": null,
+        "NSAudioCaptureUsageDescription": null
+      }
     },
     "dmg": {
-      "title": "archivo 1.3.0",
+      "title": "archivo 1.3.1",
       "icon": null,
       "internetEnabled": false,
       "writeUpdateInfo": false,
@@ -71,7 +86,8 @@
           "type": "link",
           "path": "/Applications"
         }
-      ]
+      ],
+      "license": null
     },
     "win": {
       "icon": "build/icon.ico",

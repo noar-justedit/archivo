@@ -84,6 +84,8 @@ npm install 2>&1 | tail -3
 echo "  ✓ Dependencies ready"
 echo ""
 
+# NOTE: this generic script produces an UNSIGNED macOS build.
+# For a release build (signed + notarized), use ./build-mac.command instead.
 case "$1" in
   --universal) echo "  ▶ Building macOS Universal…"; npx electron-builder --mac --universal ;;
   --win)       echo "  ▶ Building Windows x64…";    npx electron-builder --win --x64 ;;
