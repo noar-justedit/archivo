@@ -1,6 +1,6 @@
 {
   "name": "archivo",
-  "version": "1.3.1",
+  "version": "1.3.3",
   "description": "Hard Disk Catalog",
   "main": "src/main.js",
   "scripts": {
@@ -71,7 +71,7 @@
       }
     },
     "dmg": {
-      "title": "archivo 1.3.1",
+      "title": "archivo 1.3.3",
       "icon": null,
       "internetEnabled": false,
       "writeUpdateInfo": false,

@@ -81,6 +81,51 @@ app.whenReady().then(async () => {
           !!recent && recent.submenu.items.some(i => i.label === 'test-catalog.archivo'),
           recent ? recent.submenu.items.map(i => i.label).join(' | ') : '—');
 
+    // 2b — charte UI Noar : ce que la charte promet et qui peut régresser en silence
+    const cssVar = async n => (await js(`getComputedStyle(document.documentElement).getPropertyValue('${n}').trim()`));
+    check('charte: surface tokens', (await cssVar('--page')) === '#0a0b0e' && (await cssVar('--card')) === '#14161c'
+          && (await cssVar('--ins')) === '#0e1014', [await cssVar('--page'), await cssVar('--card'), await cssVar('--ins')].join(' '));
+    check('charte: state tokens', (await cssVar('--green')) === '#35c98b' && (await cssVar('--red')) === '#f2555a'
+          && (await cssVar('--blue')) === '#4d90f0' && (await cssVar('--orange')) === '#f2a03d');
+    const borders = await js(`['#titlebar','#toolbar','#col-hdr','#insp','#sb','.tr.disk-row','#ctx','.modal','.add-box','.add-in','#search-zone']
+      .map(sel => { const el = document.querySelector(sel); if (!el) return sel + ':absent';
+        const c = getComputedStyle(el);
+        const w = ['Top','Right','Bottom','Left'].map(k => parseFloat(c['border'+k+'Width'])||0).reduce((a,b)=>a+b,0);
+        return w ? sel + ':' + w + 'px' : ''; }).filter(Boolean)`);
+    check('charte: no structural borders', borders.length === 0, JSON.stringify(borders));
+    const iconBtns = await js(`Array.from(document.querySelectorAll('button,[role=button]'))
+      .filter(b => !b.textContent.trim() && b.querySelector('svg'))
+      .filter(b => !b.getAttribute('aria-label') || !b.getAttribute('title')).map(b => b.id || b.className)`);
+    check('charte: every icon-only button has aria-label + title', iconBtns.length === 0, JSON.stringify(iconBtns));
+    const emoji = await js(`(document.getElementById('toolbar').textContent + document.getElementById('ctx').textContent
+      + document.getElementById('welcome').textContent).match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FF0B}]/gu) || []`);
+    check('charte: no emoji left in toolbar, menu, welcome', emoji.length === 0, emoji.join(' '));
+    check('charte: accent reserved to the brand (never a state)', await js(`Array.from(document.styleSheets).every(sh =>
+      Array.from(sh.cssRules).every(r => !r.cssText.includes('var(--accent)') || r.selectorText === ':root'))`));
+    check('charte: scan progress is neutral information (blue)',
+          (await js(`getComputedStyle(document.getElementById('sp-fill')).backgroundColor`)) === 'rgb(77, 144, 240)',
+          await js(`getComputedStyle(document.getElementById('sp-fill')).backgroundColor`));
+    check('charte: main action tinted green',
+          (await js(`getComputedStyle(document.getElementById('btn-confirm-add')).color`)) === 'rgb(53, 201, 139)');
+
+    // Colonnes alignées quelle que soit la profondeur (défaut corrigé au portage)
+    await js(`expanded.add('disk_1'); expanded.add('disk_1/DAY01'); renderTree(); true`);
+    const kindX = await js(`(() => { const x = r => r.querySelector('.tr-kd').getBoundingClientRect().left;
+      const disk = document.querySelector('.tr.disk-row[data-did="disk_1"]');
+      const deep = document.querySelector('.tr[data-key="disk_1/DAY01/A001.mxf"]');
+      return deep ? [x(disk), x(deep)] : null; })()`);
+    check('charte: Kind column aligned on disk and nested file rows', !!kindX && Math.abs(kindX[0] - kindX[1]) < 1, JSON.stringify(kindX));
+    await js(`expanded.clear(); renderTree(); true`);
+
+    // Échap ferme ce qui informe, jamais ce qui porte une décision
+    const esc = () => js(`document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); true`);
+    await js(`openAbout(); true`); await esc(); await wait(100);
+    check('charte: Escape closes About', !(await js(`g('about-ov').classList.contains('open')`)));
+    await js(`markDirty(); newCatalog(); true`); await wait(200); await esc(); await wait(100);
+    check('charte: Escape leaves the unsaved-changes decision open', (await js(`g('mw').style.display`)) === 'flex');
+    await js(`Array.from(g('ma').querySelectorAll('button')).find(b=>b.textContent==='Cancel').click(); markClean(); true`);
+    await wait(150);
+
     // 3 — mutating marks the document dirty
     await js(`DB.disks.push({id:'disk_3',label:'SMOKE TEST',total:'1 TB',free:'0,5 TB',file_count:0,tree:[],scanned:new Date().toISOString()}); markDirty(); refreshAll(); true`);
     await wait(200);

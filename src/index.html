@@ -12,9 +12,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>archivo 1.2.0</title>
+<title>archivo</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Plus d'appel à Google Fonts : l'app n'utilise que les polices du système
+   (charte), et ne touche pas le réseau au lancement. */
 
 :root {
   --v:#5936d8; --vlt:#7a5ee8; --vbg:#0c0920;
@@ -427,6 +428,346 @@ body.dragging #dropzone{display:flex;}
 ::-webkit-scrollbar{width:6px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px;}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CHARTE UI NOAR · portage archivo
+   Un seul bloc, posé par-dessus les règles d'origine (charte §4.1).
+   Le retirer d'un coup rend l'interface d'avant.
+   Règle : le groupement est porté par le fond, jamais par un trait.
+   Trois surfaces : page, carte, creux. --raise ne sert qu'à ce qui flotte.
+═══════════════════════════════════════════════════════════════════ */
+
+/* 1 · Jetons ─────────────────────────────────────────────────────── */
+:root{
+  --page:#0a0b0e; --card:#14161c; --ins:#0e1014; --raise:#1b1d24;
+  --text:#e8eaf0; --text2:#aeb3bd; --text3:#8b909b; --text4:#6f757f;
+  --green:#35c98b; --red:#f2555a; --blue:#4d90f0; --orange:#f2a03d;
+  /* accent : la seule valeur propre à archivo. Brique, la couleur des tiroirs
+     de l'icône (build/icon.svg). Il ne sert qu'à la marque, jamais à dire un état. */
+  --accent:#c4482e;
+  --r-card:14px; --r-ins:11px; --r-field:8px; --r-badge:4px;
+  --font:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono','JetBrains Mono',Menlo,monospace;
+
+  /* Les anciens jetons d'archivo, rebranchés sur la charte : toute règle
+     d'origine non reprise ci-dessous suit quand même. */
+  --bg:var(--page); --panel:var(--page); --card2:var(--ins);
+  --tx:var(--text); --mu:var(--text2); --dm:var(--text3);
+  --gr:var(--green); --ye:var(--orange); --or:var(--orange); --re:var(--red);
+  --bd:transparent; --bd2:transparent; --bd3:transparent;
+  --rh:rgba(255,255,255,.03); --rs:var(--ins);
+  /* filet de sécurité : l'ancien violet fonctionnel devient l'information
+     neutre (bleu). Chaque usage connu est traité explicitement plus bas. */
+  --v:var(--blue); --vlt:var(--text); --vbg:rgba(77,144,240,.12);
+  --r:8px;
+  /* colonnes Type et Date resserrées : la colonne Commentaires ne tenait plus */
+  --wk:78px; --wd:118px;
+}
+body{background:var(--page);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;}
+
+/* Icônes Lucide inline */
+.ico{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;}
+.ico svg{display:block;}
+
+/* 2 · En-tête et barre d'outils : posées sur la page, sans filet ──── */
+#titlebar{background:var(--page);border:none;height:46px;}
+.tb-name{color:var(--text);}
+#tb-dbname{font-family:var(--mono);font-size:12px;color:var(--text3);max-width:420px;}
+#tb-dbname .dot{color:var(--orange);}          /* modifié, à enregistrer : à décider */
+
+#toolbar{background:var(--page);border:none;height:58px;padding:0 12px 6px;gap:2px;}
+.tsep{background:none;width:10px;}
+.btn{border:none;border-radius:10px;padding:7px 12px;gap:5px;transition:background .1s;}
+.btn:hover{background:var(--card);border:none;}
+.btn-ic{color:var(--text2);font-size:0;line-height:0;}
+.btn:hover .btn-ic{color:var(--text);}
+.btn-lb{font-family:var(--font);font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--text3);}
+.btn.prim .btn-ic{color:var(--green);}         /* l'action qui lance tout */
+#btn-delete .btn-ic{color:var(--red)!important;}
+
+/* Recherche : un champ, donc un creux. Sur la page, le creux prend la carte. */
+#search-zone{background:var(--card);border:none;border-radius:var(--r-field);height:34px;padding:0 10px;gap:8px;}
+#search-zone:focus-within{border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}
+#search-ic{color:var(--text3);font-size:0;}
+#search-inp{font-family:var(--font);font-size:13px;color:var(--text);width:230px;}
+#search-inp::placeholder{color:var(--text4);}
+#search-clear{color:var(--text3);font-size:0;background:none;border:none;cursor:pointer;padding:2px;border-radius:6px;}
+#search-clear:hover{color:var(--text);background:var(--raise);}
+
+/* 3 · Zone principale : deux cartes, 12 px d'écart ─────────────────── */
+#main{padding:0 12px;gap:12px;}
+#cat{background:var(--card);border-radius:var(--r-card);}
+#insp{background:var(--card);border:none;border-radius:var(--r-card);width:280px;}
+#insp.col{width:0;margin-left:-12px;}
+
+/* En-têtes de colonnes : des étiquettes, sans bandeau ni filet */
+#col-hdr{background:none;border:none;height:36px;}
+.ch{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--text3);}
+.ch:hover{color:var(--text2);}
+/* poignées de largeur de colonne : exception assumée (comme renamo),
+   trait neutre au survol seulement, jamais l'accent */
+.crh:hover,.crh.dragging{background:rgba(255,255,255,.18);}
+
+/* Barre de chemin : un creux dans la carte, en chasse fixe (c'est un chemin) */
+#pathbar{background:var(--ins);border:none;border-radius:var(--r-field);margin:0 10px;padding:0 10px;
+  font-family:var(--mono);font-size:12px;color:var(--text2);}
+#pathbar.on{height:28px;margin-bottom:6px;border:none;}
+.pb-ic{color:var(--text3);}
+.pb-disk{color:var(--text);font-weight:600;}
+.pb-sep{color:var(--text4);}
+.pb-seg{color:var(--text3);}
+.pb-seg.last{color:var(--text);}
+
+/* Arborescence : lignes à plat sur la carte, la sélection est la seule posée
+   sur un fond (le creux), avec le liseré qui dit l'état « sélectionné ». */
+#tree-scroll{padding:0 6px 8px;}
+.tr{border:none;border-radius:8px;}
+.tr.disk-row{border:none;}
+.tr:hover{background:rgba(255,255,255,.03);}
+.tr.sel{background:var(--ins);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);}
+.tr.sel .tr-nm{color:var(--text);}
+.tr.disk-row.sel .vol-svg,.vol-item.sel .vol-svg-md{color:var(--text);}
+.tr-tog{color:var(--text4);}
+.tr-ic{color:var(--text3);font-size:0;margin-right:7px;width:18px;display:flex;justify-content:center;}
+/* en-tête décalé de : marge de la liste 6 + chevron 16 + icône 18 + écart 7 */
+.ch-hdr-spacer{width:47px;}
+.vol-svg{color:var(--text2);}
+.tr-nm{font-family:var(--mono);font-size:12.5px;color:var(--text);}
+.tr-nm.disk{font-weight:600;}
+.tr-sz,.tr-fr,.tr-dt{font-family:var(--mono);font-size:12px;color:var(--text2);}
+.tr-dt{color:var(--text3);}
+.tr-kd{font-family:var(--font);font-size:12px;color:var(--text3);}   /* de la prose */
+.tr-nt{font-family:var(--font);font-size:12px;color:var(--text2);}   /* un commentaire */
+.dfill-txt{font-family:var(--mono);color:var(--text2);}
+.dfill-bar,.ibar,.vol-bar{background:var(--ins);}
+.tr.sel .dfill-bar{background:var(--card);}
+/* Remplissage : neutre tant que tout va bien, la couleur ne parle
+   que quand il y a quelque chose à dire. */
+.fc0,.fc50{background:var(--text4);}
+.fc80{background:var(--orange);}
+.fc90{background:var(--red);}
+
+/* État vide */
+.empty{font-family:var(--font);font-size:12.5px;color:var(--text3);}
+.empty-ic{color:var(--text4);}
+.cta{background:#0f2c1d;color:var(--green);border:none;border-radius:10px;font-family:var(--font);
+  font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:none;padding:10px 20px;}
+.cta:hover{background:#133a26;}
+.cta2{background:var(--ins);border:none;border-radius:9px;font-family:var(--font);font-size:12px;
+  font-weight:600;color:var(--text2);padding:10px 16px;}
+.cta2:hover{border:none;color:var(--text);}
+
+/* Résultats de recherche */
+.srch-hdr{border:none;padding:8px 12px;}
+#sc{font-family:var(--mono);color:var(--text3);}
+.sf{border:none;border-radius:7px;font-family:var(--font);font-size:10px;font-weight:700;
+  letter-spacing:.1em;color:var(--text3);padding:4px 9px;}
+.sf:hover{border:none;color:var(--text2);}
+.sf.on{background:var(--ins);color:var(--text);border:none;}     /* l'actif est le seul posé */
+.srch-close{background:var(--ins);border:none;border-radius:9px;font-family:var(--font);font-size:12px;
+  font-weight:600;color:var(--text2);padding:6px 12px;}
+.srch-close:hover{border:none;color:var(--text);}
+#srch-list{padding:0 6px 8px;}
+.sr{border-radius:8px;padding-left:10px;}
+.sr:hover{background:rgba(255,255,255,.03);}
+.sr-ic{color:var(--text3);font-size:0;margin-right:8px;}
+.sr-nm{font-family:var(--mono);font-size:12.5px;}
+.sr-nm em{color:var(--text);background:rgba(77,144,240,.22);border-radius:3px;}  /* info neutre */
+.sr-dk{font-family:var(--mono);color:var(--text2);}
+.sr-pt{font-family:var(--mono);color:var(--text4);}
+.sr-sz{color:var(--text2);} .sr-dt{color:var(--text3);}
+.sr-grp{background:none;border:none;height:30px;margin-top:6px;padding:0 10px;gap:7px;
+  font-family:var(--font);font-size:10px;letter-spacing:.14em;color:var(--text3);}
+
+/* 4 · Inspecteur ─────────────────────────────────────────────────── */
+.insp-hdr{border:none;height:36px;padding:0 16px;}
+.insp-title{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--text3);}
+#ib{padding:2px 16px 16px;}
+.is{margin-bottom:18px;}
+.ist{display:flex;align-items:center;height:12px;line-height:12px;border:none;padding:0;margin-bottom:10px;
+  font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--text3);}
+.ir{padding:4px 0;align-items:center;}
+.ik{font-family:var(--font);font-size:12px;color:var(--text3);}
+.iv{font-family:var(--mono);font-size:12px;color:var(--text);}
+.iv.v{color:var(--text);}
+.ithumb{background:var(--ins);border:none;border-radius:var(--r-ins);height:84px;color:var(--text3);margin-bottom:16px;}
+.vol-svg-lg{color:var(--text2);}
+.iv-e,.inta{background:var(--ins);border:none;border-radius:var(--r-field);color:var(--text);}
+.iv-e{padding:6px 8px;font-family:var(--mono);font-size:12px;}
+.inta{padding:9px 10px;font-family:var(--font);font-size:12.5px;line-height:1.5;min-height:78px;resize:none;}
+.iv-e:focus,.inta:focus{border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}
+.inta::placeholder{color:var(--text4);}
+.ibar{height:4px;margin:8px 0 2px;}
+.insv{background:var(--ins);border:none;border-radius:9px;margin-top:8px;padding:8px 14px;
+  font-family:var(--font);font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--text2);}
+.insv:hover{background:var(--raise);color:var(--text);}
+.ie{font-family:var(--font);font-size:12.5px;color:var(--text3);gap:10px;}
+.ie .ico{color:var(--text4);}
+
+/* 5 · Barre d'état : sur la page, sans filet ──────────────────────── */
+#sb{background:var(--page);border:none;height:30px;font-family:var(--font);font-size:11.5px;color:var(--text4);gap:14px;}
+.sb-ver{font-family:var(--mono);color:var(--text3);font-weight:500;}
+.sb-link{color:var(--text3);}
+.sb-link:hover{color:var(--text);text-decoration:none;}
+#sb-sel{color:var(--text3);}
+#sb-tot{font-family:var(--mono);color:var(--text3);}
+
+/* 6 · Fenêtres : une carte sur un voile, rayon 18 ───────────────────── */
+#mw,#add-modal,#about-ov,#exp-ov,#update-ov{background:rgba(0,0,0,.7);}
+.modal,.add-box,.about-card,.exp-card,.upd-card,.wb{
+  background:var(--card);border:none;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);}
+
+/* Titres de fenêtre en casse de phrase, texte courant en police de texte */
+#mt,.add-tit,.upd-h,.exp-title{font-family:var(--font);font-size:18px;font-weight:600;letter-spacing:-.3px;
+  text-transform:none;color:var(--text);}
+#mt{margin-bottom:8px;}
+#mb,.add-sub,.upd-sub{font-family:var(--font);font-size:12.5px;line-height:1.55;color:var(--text2);}
+#mb strong{color:var(--text);font-weight:600;}
+.modal{padding:22px;}
+
+/* Boutons en bas, pleine largeur (charte §3 Fenêtres) */
+#ma,.add-acts,.upd-actions{display:flex;gap:8px;justify-content:stretch;}
+#ma > button,.add-acts > button,.upd-actions > button{flex:1;}
+
+/* Trois formes de bouton */
+.btn-g,.upd-later{background:var(--ins);border:none;border-radius:10px;padding:10px 14px;
+  font-family:var(--font);font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--text2);}
+.btn-g:hover,.upd-later:hover{border:none;background:var(--raise);color:var(--text);}
+.btn-g:disabled{opacity:.35;cursor:default;background:var(--ins);color:var(--text2);}   /* pendant un scan */
+.btn-p{background:#0f2c1d;border:none;border-radius:10px;padding:10px 14px;
+  font-family:var(--font);font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:none;color:var(--green);}
+.btn-p:hover{background:#133a26;}
+.btn-p:disabled{opacity:.35;}
+#btn-confirm-add.is-update{background:rgba(77,144,240,.14);color:var(--blue);border:none;}
+.btn-r{background:rgba(242,85,90,.14);border:none;border-radius:10px;padding:10px 14px;
+  font-family:var(--font);font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--red);}
+.btn-r:hover{background:rgba(242,85,90,.22);}
+.upd-go{background:rgba(77,144,240,.14);border:none;border-radius:10px;padding:10px 14px;
+  font-family:var(--font);font-size:12.5px;font-weight:700;color:var(--blue);}
+.upd-go:hover{background:rgba(77,144,240,.22);}
+
+/* Ajouter un disque */
+.add-box{width:520px;padding:24px;}
+.add-tit{margin-bottom:4px;}
+.add-sub{margin-bottom:18px;}
+.add-vol-hdr{margin-bottom:8px;}
+.add-vol-lbl,.add-lbl{display:flex;align-items:center;gap:6px;height:12px;line-height:12px;
+  font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--text3);margin-bottom:6px;}
+.add-vol-lbl{margin-bottom:0;}
+.add-lbl .req{color:var(--orange);}                   /* manque : à remplir */
+.add-ref{background:none;border:none;border-radius:7px;padding:4px 9px;font-family:var(--font);
+  font-size:11.5px;font-weight:600;color:var(--text3);}
+.add-ref:hover{border:none;color:var(--text);}
+.add-ref.active{background:var(--ins);border:none;color:var(--text);}   /* filtre actif, posé sur fond */
+/* Liste des volumes : deux rangées puis ascenseur, une lichette qui dépasse
+   (hauteur mesurée, voir la note de portage) */
+#vol-list{border:none;border-radius:0;max-height:148px;margin-bottom:16px;display:flex;flex-direction:column;gap:4px;
+  scrollbar-width:thin;scrollbar-color:#2a2d36 transparent;}
+.vol-item{border:none;border-radius:var(--r-ins);padding:10px 12px;}
+.vol-item:hover{background:rgba(255,255,255,.03);}
+.vol-item.sel{background:var(--ins);border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);}
+.vol-svg-md{color:var(--text3);}
+.vol-name{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text);}
+.vol-meta{font-family:var(--mono);font-size:11px;color:var(--text4);margin-top:3px;}
+.vol-free{font-family:var(--mono);color:var(--text2);font-weight:500;}
+.vol-total{font-family:var(--mono);color:var(--text4);}
+/* badge unique de la charte : déjà au catalogue = une mise à jour à décider */
+.vol-badge{font-family:var(--font);font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--orange);background:rgba(242,160,61,.15);border:none;border-radius:var(--r-badge);padding:2px 6px;}
+.add-fl{margin-bottom:12px;}
+.add-row{gap:12px;}
+.add-in{background:var(--ins);border:none;border-radius:var(--r-field);padding:9px 10px;
+  font-family:var(--mono);font-size:13px;color:var(--text);}
+.add-in:focus{border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}
+.add-in::placeholder{color:var(--text4);}
+.add-in[readonly]{background:var(--ins);color:var(--text2);}
+/* Progression du scan : en cours = information neutre (bleu) */
+#scan-prog{margin-top:14px;}
+.sp-bar{height:4px;background:var(--ins);border-radius:2px;margin-bottom:8px;}
+#sp-fill{background:var(--blue);}
+#sp-stat{font-family:var(--mono);font-size:12px;color:var(--text2);}
+#sp-pct{color:var(--text)!important;font-family:var(--mono)!important;}
+#sp-eta{font-family:var(--font)!important;font-size:11.5px!important;color:var(--text3)!important;margin-top:3px!important;}
+#sp-det{font-family:var(--mono);font-size:11px;color:var(--text4);margin-top:3px;}
+#btn-cancel-scan{margin-top:12px!important;}
+.add-acts{margin-top:20px;}
+
+/* À propos, export, mise à jour */
+.about-card{padding:30px 30px 24px;}
+.about-ver{font-family:var(--mono);color:var(--text3);}
+.about-desc{font-family:var(--font);font-size:13.5px;color:var(--text);}
+.about-gpl{font-family:var(--font);font-size:11.5px;color:var(--text3);}
+.about-gpl strong{color:var(--text2);font-weight:600;}
+.about-lk{font-family:var(--font);font-size:12.5px;color:var(--blue);}
+.about-copy{font-family:var(--mono);color:var(--text4);}
+.about-close,#exp-cancel{width:100%;background:var(--ins);border:none;border-radius:10px;padding:10px 14px;
+  font-family:var(--font);font-size:12.5px;font-weight:600;color:var(--text2);}
+.about-close:hover,#exp-cancel:hover{background:var(--raise);color:var(--text);border:none;}
+.exp-card{padding:24px;}
+.exp-opt{display:flex;gap:12px;align-items:flex-start;background:var(--ins);border:none;border-radius:var(--r-ins);
+  padding:13px 14px;margin-bottom:8px;}
+.exp-opt:hover{background:var(--raise);border:none;}
+.exp-opt .ico{color:var(--text3);margin-top:1px;}
+.exp-opt-t{font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--text);}
+.exp-opt-d{font-family:var(--font);font-size:11.5px;color:var(--text3);}
+.upd-card{padding:24px;}
+
+/* Menu contextuel : flotte, donc --raise. Groupes séparés par un écart. */
+#ctx{background:var(--raise);border:none;border-radius:12px;padding:6px;min-width:220px;
+  box-shadow:0 18px 44px rgba(0,0,0,.6);}
+.cx{font-family:var(--font);font-size:12.5px;color:var(--text);border-radius:7px;padding:7px 10px;gap:10px;}
+.cx .ico{color:var(--text3);}
+.cx:hover{background:rgba(255,255,255,.06);color:var(--text);}
+.cx.del{color:var(--red);}
+.cx.del .ico{color:var(--red);}
+.cx.del:hover{background:rgba(242,85,90,.14);color:var(--red);}
+.cxs{height:6px;background:none;margin:0;}
+
+/* 7 · Accueil ────────────────────────────────────────────────────── */
+#welcome{background:rgba(10,11,14,.97);}
+.wb{padding:34px 32px 26px;max-width:420px;}
+.ws{font-family:var(--mono);font-size:11.5px;color:var(--text3);letter-spacing:.02em;}
+.wbp{background:rgba(77,144,240,.14);border:none;border-radius:var(--r-card);padding:14px;
+  font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:none;color:var(--blue);}
+.wbp:hover{background:rgba(77,144,240,.22);}
+.wbg{background:var(--ins);border:none;border-radius:10px;padding:11px;
+  font-family:var(--font);font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--text2);}
+.wbg:hover{background:var(--raise);border:none;color:var(--text);}
+#recent-list{margin-top:24px;}
+.rc-h{display:flex;align-items:center;height:12px;line-height:12px;font-family:var(--font);font-size:10px;font-weight:700;
+  letter-spacing:.14em;color:var(--text3);margin-bottom:8px;padding-left:2px;}
+.rc{background:var(--ins);border:none;border-radius:10px;padding:9px 11px;margin-bottom:6px;}
+.rc:hover{background:var(--raise);border:none;}
+.rc-n{font-family:var(--mono);font-size:12.5px;color:var(--text);}
+.rc-p{font-family:var(--mono);font-size:10.5px;color:var(--text4);margin-top:3px;}
+/* le chemin est tronqué par la gauche (direction rtl) : sans ces marques,
+   la barre oblique de tête partait en fin de ligne (défaut d'avant). */
+.rc-p::before,.rc-p::after{content:"\200E";}
+.rc-clear{font-family:var(--font);font-size:11px;letter-spacing:0;text-transform:none;color:var(--text4);}
+.rc-clear:hover{color:var(--text);}
+
+/* Glisser-déposer : le seul contour est celui qui dit l'état « déposable » */
+#dropzone{background:rgba(10,11,14,.82);}
+.dz-box{background:var(--card);border:none;border-radius:18px;box-shadow:inset 0 0 0 2px rgba(77,144,240,.55);}
+.dz-t{font-family:var(--font);font-size:15px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--text);}
+.dz-s{font-family:var(--mono);font-size:11px;color:var(--text3);}
+
+/* Notifications : elles flottent, la couleur du texte porte l'état */
+.toast{background:var(--raise);border:none;border-radius:10px;padding:9px 14px;font-family:var(--font);
+  font-size:12.5px;color:var(--text2);box-shadow:0 10px 26px rgba(0,0,0,.55);}
+.toast.ok{border:none;color:var(--green);}
+.toast.err{border:none;color:var(--red);}
+.toast.info{border:none;color:var(--blue);}
+
+/* Ascenseurs de la charte */
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:#2a2d36;border-radius:8px;}
+#tree-scroll::-webkit-scrollbar,#srch-list::-webkit-scrollbar,#ib::-webkit-scrollbar,#vol-list::-webkit-scrollbar{width:8px;}
+#tree-scroll::-webkit-scrollbar-thumb,#srch-list::-webkit-scrollbar-thumb,#ib::-webkit-scrollbar-thumb,#vol-list::-webkit-scrollbar-thumb{background:#2a2d36;border-radius:8px;}
+
+/* Focus clavier : l'autre contour autorisé */
+button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);}
+/* ═══ fin du bloc CHARTE UI NOAR ═══ */
 </style>
 </head>
 <body>
@@ -436,9 +777,9 @@ body.dragging #dropzone{display:flex;}
   <div class="wb">
     <img src="assets/app-icon.png" class="welcome-icon" alt="" />
     <div class="wt">archivo</div>
-    <div class="ws" id="welcome-ver">v1.3.1 · Hard Disk Catalog</div>
+    <div class="ws" id="welcome-ver">v1.3.3 · Hard Disk Catalog</div>
     <div class="wbtns">
-      <button class="wbp" id="btn-load-db">📂 Open Catalog</button>
+      <button class="wbp" id="btn-load-db">Open catalog</button>
       <button class="wbg" id="btn-start-empty">New empty catalog</button>
     </div>
     <div id="recent-list"></div>
@@ -464,42 +805,41 @@ body.dragging #dropzone{display:flex;}
 <!-- TOOLBAR -->
 <div id="toolbar">
   <div class="btn prim" id="btn-add-disk">
-    <div class="btn-ic">＋</div>
+    <div class="btn-ic" data-ico="plus" data-size="20"></div>
     <div class="btn-lb">Add Disk</div>
   </div>
   <div class="tsep"></div>
   <div class="btn" id="btn-import">
-    <div class="btn-ic">📂</div>
+    <div class="btn-ic" data-ico="folder-open" data-size="20"></div>
     <div class="btn-lb">Open Catalog</div>
   </div>
   <div class="btn" id="btn-export">
-    <div class="btn-ic">💾</div>
+    <div class="btn-ic" data-ico="save" data-size="20"></div>
     <div class="btn-lb">Save Catalog</div>
   </div>
   <div class="btn" id="btn-close">
-    <div class="btn-ic">✕</div>
+    <div class="btn-ic" data-ico="x" data-size="20"></div>
     <div class="btn-lb">Close Catalog</div>
   </div>
   <div class="tsep"></div>
   <div class="btn" id="btn-export-data">
-    <div class="btn-ic">⇩</div>
+    <div class="btn-ic" data-ico="download" data-size="20"></div>
     <div class="btn-lb">Export</div>
   </div>
   <div class="tsep"></div>
   <div class="btn" id="btn-delete">
-    <div class="btn-ic" style="color:var(--re)">🗑</div>
+    <div class="btn-ic" data-ico="trash-2" data-size="20"></div>
     <div class="btn-lb">Delete</div>
   </div>
   <div class="tsep"></div>
   <div class="btn" id="btn-inspector">
-    <div class="btn-ic">☰</div>
+    <div class="btn-ic" data-ico="panel-right" data-size="20"></div>
     <div class="btn-lb">Inspector</div>
   </div>
   <div id="search-zone">
-    <span id="search-ic">🔍</span>
+    <span id="search-ic" data-ico="search" data-size="15"></span>
     <input id="search-inp" placeholder="Search catalog…" />
-    <span id="search-clear">✕</span>
-    <span class="search-badge">Search</span>
+    <span id="search-clear" role="button" tabindex="0" aria-label="Clear search" title="Clear search" data-ico="x" data-size="14"></span>
   </div>
 </div>
 
@@ -530,7 +870,7 @@ body.dragging #dropzone{display:flex;}
             <div class="sf" data-f="archive">Archives</div>
             <div class="sf" data-f="doc">Docs</div>
           </div>
-          <button class="srch-close" id="btn-srch-close">✕ Clear</button>
+          <button class="srch-close" id="btn-srch-close">Clear</button>
         </div>
         <div id="srch-list"></div>
       </div>
@@ -539,16 +879,15 @@ body.dragging #dropzone{display:flex;}
 
   <div id="insp">
     <div class="insp-hdr"><span class="insp-title">Inspector</span></div>
-    <div id="ib"><div class="ie"><span style="font-size:28px;opacity:.15">☰</span>Select an item</div></div>
+    <div id="ib"><div class="ie"><span data-ico="info" data-size="26"></span>Select an item</div></div>
   </div>
 </div>
 
 <!-- STATUS BAR -->
 <div id="sb">
-  <span class="sb-ver" id="sb-ver">v1.3.1</span>
+  <span class="sb-ver" id="sb-ver">v1.3.3</span>
   <a class="sb-link" id="sb-github">GitHub</a>
   <a class="sb-link" id="sb-about">About</a>
-  <span style="color:var(--bd2)">|</span>
   <span id="sb-sel">No selection</span>
   <span style="margin-left:auto;" id="sb-tot">—</span>
 </div>
@@ -558,7 +897,7 @@ body.dragging #dropzone{display:flex;}
   <div class="about-card">
     <img src="assets/app-icon.png" class="about-icon" alt="" />
     <div class="about-name">archivo</div>
-    <div class="about-ver" id="about-ver">v1.3.1</div>
+    <div class="about-ver" id="about-ver">v1.3.3</div>
     <div class="about-desc">Catalogue your archive drives once, search them all offline.</div>
     <div class="about-gpl">
       Free software under the <strong>GNU General Public License v3</strong>.<br>
@@ -578,14 +917,14 @@ body.dragging #dropzone{display:flex;}
 <div id="exp-ov">
   <div class="exp-card">
     <div class="exp-title">Export catalog</div>
-    <div class="exp-opt" id="exp-csv">
-      <div class="exp-opt-t">📄 CSV — for Google Sheets</div>
+    <div class="exp-opt" id="exp-csv"><span data-ico="file-spreadsheet" data-size="18"></span><div>
+      <div class="exp-opt-t">CSV — for Google Sheets</div>
       <div class="exp-opt-d">A flat list of every file (disk, path, size, date). Import it into Google Sheets or Excel to share with your team.</div>
-    </div>
-    <div class="exp-opt" id="exp-html">
-      <div class="exp-opt-t">🌐 HTML — standalone web viewer</div>
+    </div></div>
+    <div class="exp-opt" id="exp-html"><span data-ico="globe" data-size="18"></span><div>
+      <div class="exp-opt-t">HTML — standalone web viewer</div>
       <div class="exp-opt-d">A single searchable file, viewable in any browser, no install needed. Share it directly with your team.</div>
-    </div>
+    </div></div>
     <button class="about-close" id="exp-cancel">Cancel</button>
   </div>
 </div>
@@ -593,38 +932,38 @@ body.dragging #dropzone{display:flex;}
 <!-- ADD DISK MODAL -->
 <div id="add-modal">
   <div class="add-box">
-    <div class="add-tit">＋ Add Disk to Catalog</div>
+    <div class="add-tit">Add a disk to the catalog</div>
     <div class="add-sub">Select a mounted volume. archivo reads its info and scans all files automatically.</div>
     <div class="add-vol-hdr">
-      <span class="add-vol-lbl">Mounted Volumes</span>
-<button class="add-ref" id="btn-hide-system" style="margin-right:4px;">Hide System</button><button class="add-ref" id="btn-hide-network" style="margin-right:4px;">Hide Network</button><button class="add-ref" id="btn-refresh-vols">↻ Refresh</button>
+      <span class="add-vol-lbl">MOUNTED VOLUMES</span>
+<button class="add-ref" id="btn-hide-system" style="margin-right:4px;">Hide System</button><button class="add-ref" id="btn-hide-network" style="margin-right:4px;">Hide Network</button><button class="add-ref" id="btn-refresh-vols">Refresh</button>
     </div>
     <div id="vol-list"><div style="padding:16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dm);">Click Refresh to list volumes…</div></div>
     <div class="add-fl">
-      <div class="add-lbl">Disk Label <span style="color:var(--v)">*</span></div>
+      <div class="add-lbl">DISK LABEL <span class="req">*</span></div>
       <input class="add-in" id="add-label" placeholder="Detected from volume name…" />
     </div>
     <div class="add-fl">
-      <div class="add-lbl">Note / Comments</div>
+      <div class="add-lbl">NOTE</div>
       <input class="add-in" id="add-note" placeholder="Optional note…" />
     </div>
     <div class="add-row">
       <div class="add-fl">
-        <div class="add-lbl">Model <span style="color:var(--dm);font-size:8px;font-weight:400">auto</span></div>
+        <div class="add-lbl">MODEL <svg width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="detected automatically" style="flex-shrink:0;display:block;"><circle cx="12" cy="12" r="10" fill="none" stroke="#35c98b" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="#35c98b" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
         <input class="add-in" id="add-model" readonly placeholder="—" />
       </div>
       <div class="add-fl">
-        <div class="add-lbl">Serial <span style="color:var(--dm);font-size:8px;font-weight:400">auto</span></div>
+        <div class="add-lbl">SERIAL <svg width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="detected automatically" style="flex-shrink:0;display:block;"><circle cx="12" cy="12" r="10" fill="none" stroke="#35c98b" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="#35c98b" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
         <input class="add-in" id="add-serial" readonly placeholder="—" />
       </div>
     </div>
     <div class="add-row">
       <div class="add-fl">
-        <div class="add-lbl">Total <span style="color:var(--dm);font-size:8px;font-weight:400">auto</span></div>
+        <div class="add-lbl">TOTAL <svg width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="detected automatically" style="flex-shrink:0;display:block;"><circle cx="12" cy="12" r="10" fill="none" stroke="#35c98b" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="#35c98b" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
         <input class="add-in" id="add-total" readonly placeholder="—" />
       </div>
       <div class="add-fl">
-        <div class="add-lbl">Free <span style="color:var(--dm);font-size:8px;font-weight:400">auto</span></div>
+        <div class="add-lbl">FREE <svg width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="detected automatically" style="flex-shrink:0;display:block;"><circle cx="12" cy="12" r="10" fill="none" stroke="#35c98b" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="#35c98b" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
         <input class="add-in" id="add-free" readonly placeholder="—" />
       </div>
     </div>
@@ -636,26 +975,26 @@ body.dragging #dropzone{display:flex;}
       </div>
       <div id="sp-eta" style="font-family:var(--mono);font-size:9px;color:var(--mu);margin-top:2px;"></div>
       <div id="sp-det"></div>
-      <button class="btn-r" id="btn-cancel-scan" style="margin-top:10px;width:100%;">⊗ Cancel Scan</button>
+      <button class="btn-r" id="btn-cancel-scan" style="margin-top:10px;width:100%;">Cancel scan</button>
     </div>
     <div class="add-acts">
       <button class="btn-g" id="btn-cancel-add">Cancel</button>
-      <button class="btn-p" id="btn-confirm-add" disabled>▶ Scan &amp; Add</button>
+      <button class="btn-p" id="btn-confirm-add" disabled>Scan &amp; add</button>
     </div>
   </div>
 </div>
 
 <!-- CONTEXT MENU -->
 <div id="ctx">
-  <div class="cx" id="ctx-update">🔄 Update from Disk</div>
+  <div class="cx" id="ctx-update"><span data-ico="refresh-cw" data-size="14"></span>Update from disk</div>
   <div class="cxs" id="ctx-sep-upd"></div>
-  <div class="cx" id="ctx-rename">✏️ Rename Disk</div>
-  <div class="cx" id="ctx-note">💬 Edit Note</div>
+  <div class="cx" id="ctx-rename"><span data-ico="pencil" data-size="14"></span>Rename disk</div>
+  <div class="cx" id="ctx-note"><span data-ico="message-square" data-size="14"></span>Edit note</div>
   <div class="cxs" id="ctx-sep"></div>
-  <div class="cx" id="ctx-reveal">🔍 Reveal in Finder</div>
-  <div class="cx" id="ctx-open">↗ Open</div>
+  <div class="cx" id="ctx-reveal"><span data-ico="folder-search" data-size="14"></span>Reveal in Finder</div>
+  <div class="cx" id="ctx-open"><span data-ico="external-link" data-size="14"></span>Open</div>
   <div class="cxs"></div>
-  <div class="cx del" id="ctx-del">⊗ Remove from Catalog</div>
+  <div class="cx del" id="ctx-del"><span data-ico="circle-x" data-size="14"></span>Remove from catalog</div>
 </div>
 
 <!-- CONFIRM MODAL -->
@@ -672,6 +1011,48 @@ body.dragging #dropzone{display:flex;}
 
 <script>
 'use strict';
+
+/* Icônes Lucide (ISC, lucide.dev), chemins repris tels quels de lucide-static 0.460.0.
+   Ne jamais redessiner une icône à la main : en ajouter une = copier son contenu SVG ici. */
+const LUCIDE = {
+  "plus": "<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />",
+  "folder-open": "<path d=\"m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2\" />",
+  "save": "<path d=\"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z\" /> <path d=\"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7\" /> <path d=\"M7 3v4a1 1 0 0 0 1 1h7\" />",
+  "x": "<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />",
+  "download": "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\" /> <polyline points=\"7 10 12 15 17 10\" /> <line x1=\"12\" x2=\"12\" y1=\"15\" y2=\"3\" />",
+  "trash-2": "<path d=\"M3 6h18\" /> <path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\" /> <path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\" /> <line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\" /> <line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\" />",
+  "panel-right": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" /> <path d=\"M15 3v18\" />",
+  "search": "<circle cx=\"11\" cy=\"11\" r=\"8\" /> <path d=\"m21 21-4.3-4.3\" />",
+  "film": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" /> <path d=\"M7 3v18\" /> <path d=\"M3 7.5h4\" /> <path d=\"M3 12h18\" /> <path d=\"M3 16.5h4\" /> <path d=\"M17 3v18\" /> <path d=\"M17 7.5h4\" /> <path d=\"M17 16.5h4\" />",
+  "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\" /> <circle cx=\"9\" cy=\"9\" r=\"2\" /> <path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\" />",
+  "music": "<path d=\"M9 18V5l12-2v13\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <circle cx=\"18\" cy=\"16\" r=\"3\" />",
+  "file-archive": "<path d=\"M10 12v-1\" /> <path d=\"M10 18v-2\" /> <path d=\"M10 7V6\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" /> <path d=\"M15.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v16a2 2 0 0 0 .274 1.01\" /> <circle cx=\"10\" cy=\"20\" r=\"2\" />",
+  "file-text": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" /> <path d=\"M10 9H8\" /> <path d=\"M16 13H8\" /> <path d=\"M16 17H8\" />",
+  "file": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" />",
+  "folder": "<path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\" />",
+  "archive": "<rect width=\"20\" height=\"5\" x=\"2\" y=\"3\" rx=\"1\" /> <path d=\"M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8\" /> <path d=\"M10 12h4\" />",
+  "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\" /> <path d=\"M2 12h20\" />",
+  "info": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" />",
+  "chevron-right": "<path d=\"m9 18 6-6-6-6\" />",
+  "chevron-down": "<path d=\"m6 9 6 6 6-6\" />",
+  "refresh-cw": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\" /> <path d=\"M21 3v5h-5\" /> <path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\" /> <path d=\"M8 16H3v5\" />",
+  "pencil": "<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\" /> <path d=\"m15 5 4 4\" />",
+  "message-square": "<path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\" />",
+  "external-link": "<path d=\"M15 3h6v6\" /> <path d=\"M10 14 21 3\" /> <path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\" />",
+  "circle-x": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"m15 9-6 6\" /> <path d=\"m9 9 6 6\" />",
+  "hard-drive": "<line x1=\"22\" x2=\"2\" y1=\"12\" y2=\"12\" /> <path d=\"M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\" /> <line x1=\"6\" x2=\"6.01\" y1=\"16\" y2=\"16\" /> <line x1=\"10\" x2=\"10.01\" y1=\"16\" y2=\"16\" />",
+  "file-spreadsheet": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" /> <path d=\"M8 13h2\" /> <path d=\"M14 13h2\" /> <path d=\"M8 17h2\" /> <path d=\"M14 17h2\" />",
+  "folder-search": "<path d=\"M10.7 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v4.1\" /> <path d=\"m21 21-1.9-1.9\" /> <circle cx=\"17\" cy=\"17\" r=\"3\" />"
+  };
+function ico(name, size){
+  const s = size || 16;
+  return '<span class="ico"><svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(LUCIDE[name]||'')+'</svg></span>';
+}
+function paintIcons(root){
+  (root||document).querySelectorAll('[data-ico]').forEach(el => {
+    el.innerHTML = ico(el.dataset.ico, +el.dataset.size || 16);
+  });
+}
 
 /* ════════════════════════════════════════════════
    STATE
@@ -752,6 +1133,14 @@ function treeCtx(e) {
    KEYBOARD NAVIGATION
 ════════════════════════════════════════════════ */
 function wireKeyboard() {
+  // Échap ferme ce qui ne fait qu'informer : À propos, Export, menu contextuel.
+  // Les fenêtres qui portent une décision (enregistrer ou non, mise à jour) gardent leurs boutons.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (g('about-ov').classList.contains('open')) { g('about-ov').classList.remove('open'); e.preventDefault(); return; }
+    if (g('exp-ov').classList.contains('open'))   { g('exp-ov').classList.remove('open');   e.preventDefault(); return; }
+    if (g('ctx').style.display === 'block')       { g('ctx').style.display = 'none';        e.preventDefault(); }
+  });
   document.addEventListener('keydown', e => {
     // Don't intercept when typing in inputs
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -798,6 +1187,7 @@ function wireKeyboard() {
     const plat = (window.archivo && window.archivo.platform) || 'darwin';
     document.body.classList.add(plat === 'darwin' ? 'plat-mac' : 'plat-other');
   } catch (e) { document.body.classList.add('plat-mac'); }
+  paintIcons();
   wireButtons();
   wireSearch();
   wireSearchFilters();
@@ -1310,7 +1700,7 @@ function sorted() {
 function renderTree() {
   const body = g('tree-body');
   if (!DB.disks.length) {
-    body.innerHTML = '<div class="empty"><div style="font-size:40px;opacity:.15">🗄</div><div>No disks in catalog</div><div style="display:flex;gap:8px;margin-top:6px;"><button class="cta" id="et-add">＋ Add Disk</button><button class="cta2" id="et-import">Import</button></div></div>';
+    body.innerHTML = '<div class="empty"><div class="empty-ic">' + ico('archive', 34) + '</div><div>No disks in this catalog yet</div><div style="display:flex;gap:8px;margin-top:6px;"><button class="cta" id="et-add">Add a disk</button><button class="cta2" id="et-import">Open a catalog</button></div></div>';
     g('et-add').addEventListener('click', showAddDisk);
     g('et-import').addEventListener('click', () => openCatalog());
     return;
@@ -1331,9 +1721,9 @@ function fcC(p)  { return p>=90?'fc90':p>=80?'fc80':p>=50?'fc50':'fc0'; }
 function diskRow(disk) {
   const p=pctN(disk), exp=expanded.has(disk.id);
   const sel=selected?.type==='disk'&&selected.disk.id===disk.id;
-  const freeCol=pgb(disk.free)<10?'var(--re)':pgb(disk.free)<50?'var(--ye)':'var(--gr)';
+  const freeCol=pgb(disk.free)<10?'var(--re)':pgb(disk.free)<50?'var(--ye)':'var(--mu)';
   return `<div class="tr disk-row${sel?' sel':''}" data-type="disk" data-did="${disk.id}">
-    <div class="tr-tog">${exp?'▾':'▶'}</div>
+    <div class="tr-tog">${ico(exp?'chevron-down':'chevron-right', 13)}</div>
     <div class="tr-ic vol-svg">${volSvg(diskIconName(disk))}</div>
     <div class="tr-nm disk">${esc(disk.label)}</div>
     <div class="dfill-wrap"><div class="dfill-txt">${esc(disk.total||'?')}</div><div class="dfill-bar"><div class="dfill-in ${fcC(p)}" style="width:${p}%"></div></div></div>
@@ -1382,18 +1772,21 @@ function childRows(rows, nodes, disk, depth, parentKey) {
     const key   = parentKey + '/' + n.name;
     const exp   = expanded.has(key);
     const sel   = selected?.type === 'node' && selected.key === key;
-    const icon  = isDir ? (exp ? '📂' : '📁') : fileIcon(n.name);
-    const pad   = 4 + depth * 16;
+    const icon  = isDir ? ico(exp ? 'folder-open' : 'folder', 15) : fileIcon(n.name);
+    // Indentation portée par une cale en tête de ligne, retranchée de la
+    // colonne du nom : les colonnes Taille / Type / Date restent alignées
+    // quelle que soit la profondeur (avant, toute la ligne glissait).
+    const pad   = depth * 16;
     rows.push(
       '<div class="tr' + (sel ? ' sel' : '') + '"' +
       ' data-type="node"' +
       ' data-did="' + disk.id + '"' +
       ' data-key="' + esc(key) + '"' +
-      (isDir ? '' : ' data-file="1"') +
-      ' style="padding-left:' + pad + 'px">' +
-      '<div class="tr-tog">' + (isDir ? '<span data-tog="1">' + (exp ? '▾' : '▶') + '</span>' : '') + '</div>' +
+      (isDir ? '' : ' data-file="1"') + '>' +
+      '<div style="width:' + pad + 'px;flex-shrink:0"></div>' +
+      '<div class="tr-tog">' + (isDir ? '<span data-tog="1">' + ico(exp ? 'chevron-down' : 'chevron-right', 13) + '</span>' : '') + '</div>' +
       '<div class="tr-ic">' + icon + '</div>' +
-      '<div class="tr-nm">' + esc(n.name) + '</div>' +
+      '<div class="tr-nm" style="width:calc(var(--wnm) - ' + pad + 'px)">' + esc(n.name) + '</div>' +
       '<div class="tr-sz">' + fmtB(isDir ? getDirSize(n) : (n.size || 0)) + '</div>' +
       '<div class="tr-fr"></div>' +
       '<div class="tr-kd">' + (isDir ? 'folder' : 'file') + '</div>' +
@@ -1448,12 +1841,12 @@ function updatePathBar() {
   const bar = g('pathbar');
   if (!selected) { bar.classList.remove('on'); bar.innerHTML = ''; return; }
   if (selected.type === 'disk') {
-    bar.innerHTML = '<span class="pb-ic">🖥</span><span class="pb-disk">' + esc(selected.disk.label) + '</span>';
+    bar.innerHTML = '<span class="pb-ic">' + ico('hard-drive', 14) + '</span><span class="pb-disk">' + esc(selected.disk.label) + '</span>';
     bar.classList.add('on');
     return;
   }
   const segs = selected.key.split('/').slice(1);
-  let html = '<span class="pb-ic">🖥</span><span class="pb-disk">' + esc(selected.disk.label) + '</span>';
+  let html = '<span class="pb-ic">' + ico('hard-drive', 14) + '</span><span class="pb-disk">' + esc(selected.disk.label) + '</span>';
   segs.forEach((s, i) => {
     const last = i === segs.length - 1;
     html += '<span class="pb-sep">›</span><span class="pb-seg' + (last ? ' last' : '') + '">' + esc(s) + '</span>';
@@ -1483,11 +1876,11 @@ function highlightSelected() {
 function updateInsp() {
   const body = g('ib');
   if (!inspOpen || !body) return;
-  if (!selected) { body.innerHTML='<div class="ie"><span style="font-size:28px;opacity:.15">☰</span>Select an item</div>'; return; }
+  if (!selected) { body.innerHTML='<div class="ie">' + ico('info', 26) + 'Select an item</div>'; return; }
 
   if (selected.type === 'disk') {
     const d=selected.disk, p=pctN(d), fc=fcC(p);
-    const freeCol=pgb(d.free)<10?'var(--re)':pgb(d.free)<50?'var(--ye)':'var(--gr)';
+    const freeCol=pgb(d.free)<10?'var(--re)':pgb(d.free)<50?'var(--ye)':'var(--tx)';
     body.innerHTML=`
       <div class="ithumb vol-svg-lg">${volSvg(diskIconName(d))}</div>
       <div class="is">
@@ -1517,10 +1910,10 @@ function updateInsp() {
     g('btn-save-note').addEventListener('click', () => saveNote(d.id));
   } else {
     const n=selected.node;
-    if (!n) { body.innerHTML='<div class="ie"><span style="font-size:28px;opacity:.15">☰</span>Select an item</div>'; return; }
+    if (!n) { body.innerHTML='<div class="ie">' + ico('info', 26) + 'Select an item</div>'; return; }
     const isDir=n.type==='dir', ext=isDir?'':(n.name.split('.').pop()||'').toLowerCase();
     body.innerHTML=`
-      <div class="ithumb">${isDir?'📁':fileIcon(n.name)}</div>
+      <div class="ithumb">${isDir?ico('folder',34):fileIcon(n.name,34)}</div>
       <div class="is">
         <div class="ist">General</div>
         <div class="ir"><span class="ik">Name</span><span class="iv">${esc(n.name)}</span></div>
@@ -1557,7 +1950,7 @@ async function showAddDisk() {
   pendingVol = null;
   ['add-label','add-note','add-model','add-serial','add-total','add-free'].forEach(id=>{g(id).value='';});
   g('btn-confirm-add').disabled = true;
-  g('btn-confirm-add').textContent = '▶ Scan & Add';
+  g('btn-confirm-add').textContent = 'Scan & add';
   g('btn-confirm-add').classList.remove('is-update');
   g('scan-prog').style.display = 'none';
   g('sp-fill').style.width = '0%';
@@ -1625,10 +2018,10 @@ async function selectVol(el, vol) {
   // If this volume is already archived, reflect it on the confirm button.
   const archived = findExistingDisk('', vol.name);
   if (archived) {
-    g('btn-confirm-add').textContent = '🔄 Update existing';
+    g('btn-confirm-add').textContent = 'Update existing';
     g('btn-confirm-add').classList.add('is-update');
   } else {
-    g('btn-confirm-add').textContent = '▶ Scan & Add';
+    g('btn-confirm-add').textContent = 'Scan & add';
     g('btn-confirm-add').classList.remove('is-update');
   }
   try {
@@ -1967,7 +2360,7 @@ function execSearch(q) {
   g('srch-list').innerHTML=Object.values(byDisk).map(grp=>{
     const rows=grp.items.map(r=>{
       const nm=r.node?r.node.name:r.disk.label;
-      const ic=!r.node?'🖥':r.node.type==='dir'?'📁':fileIcon(r.node.name);
+      const ic=!r.node?ico('hard-drive',15):r.node.type==='dir'?ico('folder',15):fileIcon(r.node.name);
       const hl=esc(nm).replace(new RegExp('('+escRe(q.trim())+')','gi'),'<em>$1</em>');
       const sz=r.node?fmtB(r.node.type==='dir'?getDirSize(r.node):(r.node.size||0)):'';
       const dt=r.node?(r.node.modified||''):(r.disk.scanned||'').slice(0,10);
@@ -1978,7 +2371,7 @@ function execSearch(q) {
         <div class="sr-sz">${sz}</div><div class="sr-dt">${dt}</div>
       </div>`;
     }).join('');
-    return`<div class="sr-grp">📀 ${esc(grp.disk.label)} · ${grp.items.length}</div>${rows}`;
+    return`<div class="sr-grp">${ico('hard-drive',13)} ${esc(grp.disk.label)} · ${grp.items.length}</div>${rows}`;
   }).join('');
   // Wire search result clicks
   g('srch-list').querySelectorAll('.sr').forEach(el=>{
@@ -2172,11 +2565,11 @@ function typeStr(ext){
   if(D.has(ext)) return'Document ('+ext.toUpperCase()+')';
   return ext?ext.toUpperCase()+' file':'file';
 }
-function fileIcon(name){
-  const ext=(name.split('.').pop()||'').toLowerCase();
-  if(V.has(ext)) return'🎬'; if(I.has(ext)) return'🖼';
-  if(A.has(ext)) return'🎵'; if(AR.has(ext))return'📦';
-  if(D.has(ext)) return'📄'; return'📝';
+function fileIcon(name, size){
+  const ext=(name.split('.').pop()||'').toLowerCase(), s=size||15;
+  if(V.has(ext)) return ico('film',s);    if(I.has(ext)) return ico('image',s);
+  if(A.has(ext)) return ico('music',s);   if(AR.has(ext))return ico('file-archive',s);
+  if(D.has(ext)) return ico('file-text',s); return ico('file',s);
 }
 </script>
 </body>

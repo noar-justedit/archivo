@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- archivo — icône « tiroirs », couleur d'identité Brique (tiroirs #c4482e).
+       Dessin repris à l'identique de l'icône violette d'origine (canevas 512).
+       Gamme : tiroir 1 le plus clair, puis tiroirs 2 et 3, toit, poignées.
+       Poignées : segments d'un cercle de rayon 88,3 centré 18,7 px au-dessus
+       du haut de chaque tiroir (mesuré sur l'original). -->
+  <rect x="9" y="106" width="494" height="133" fill="#d75f46"/>
+  <rect x="9" y="239" width="494" height="140" fill="#c4482e"/>
+  <rect x="9" y="379" width="494" height="133" fill="#b73c22"/>
+  <polygon points="123,0 389,0 503,106 9,106" fill="#ab3015"/>
+  <path d="M169.7,106 A88.3,88.3 0 0 0 342.3,106 Z" fill="#ab3015"/>
+  <path d="M169.7,239 A88.3,88.3 0 0 0 342.3,239 Z" fill="#7e1800"/>
+  <path d="M169.7,379 A88.3,88.3 0 0 0 342.3,379 Z" fill="#7e1800"/>
+</svg>
