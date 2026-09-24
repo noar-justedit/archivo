@@ -34,6 +34,13 @@ the catalog, and scans the selected drive with live progress.
 - Volume-type icons for USB, network and system drives
 - Duplicate detection: update an existing disk or add a separate entry
 - Right-click a catalogued disk to re-scan and update it from the live drive
+- Reveal any catalogued file in Finder / Explorer when its disk is connected
+- Scans report what they could not read (permissions, read errors) instead of
+  silently skipping it
+- Column sort applies inside folders too; huge folders open instantly (only the
+  rows on screen are drawn)
+- Fully keyboard-driven tree: arrows, Home/End, Page Up/Down, Enter, and the
+  context-menu key or Shift+F10
 - Live scan progress with percentage and estimated time, cancellable
 - Path bar showing the disk and full location of any selected file
 - Compressed catalog files (`.archivo`), up to ~90% smaller than raw JSON
@@ -45,6 +52,8 @@ the catalog, and scans the selected drive with live progress.
 - Full application menu with the usual keyboard shortcuts
 - Atomic saves: an interrupted save can never truncate the catalog on disk
 - Optional update check against a version file hosted in this repo
+- Catalogs from others are treated as untrusted: every file is validated and
+  rebuilt on open, and the page runs under a strict Content-Security-Policy
 
 ## Install (from a release)
 
@@ -64,10 +73,11 @@ git clone https://github.com/noar-justedit/archivo.git
 cd archivo
 npm install
 npm start          # run in dev
-npm test           # headless smoke test of the document model
+npm test           # headless smoke test (document model, security, UI)
+npm run test:scanner   # scanner test, plain Node
 ```
 
-On Linux/CI the test needs a display: `xvfb-run -a npm test`.
+On Linux/CI the smoke test needs a display: `xvfb-run -a npm test`.
 
 ### Packaging
 
@@ -147,10 +157,15 @@ archivo/
 │   ├── main.js        Electron main process (window, menu, document state,
 │   │                  IPC, volume scan, update check)
 │   ├── preload.js     Context-isolated bridge (window.archivo API)
-│   ├── index.html     Renderer: full UI, styles and app logic
+│   ├── scanner.js     Volume scan (plain Node, testable on its own)
+│   ├── catalog.js     Validation of every catalog file opened
+│   ├── export-viewer.js  Standalone HTML viewer written by Export
+│   ├── index.html     Renderer: markup and styles
+│   ├── app.js         Renderer: app logic (external file, required by the CSP)
 │   ├── assets/        App icon
 │   └── fonts/         Poppins (OFL)
-├── test/smoke.js      Headless test of the document model (npm test)
+├── test/smoke.js      Headless test of the whole app (npm test)
+├── test/scanner.test.js  Scanner test (npm run test:scanner)
 ├── build/             Packaging icons + entitlements.mac.plist
 ├── build-mac.command   macOS build (double-click in Finder)
 ├── build-win.bat      Windows build (on Windows)
@@ -184,6 +199,10 @@ shows a dismissible notice; a dismissed version is not shown again.
 | Find | ⌘F | Ctrl+F |
 | Toggle inspector | ⌘I | Ctrl+I |
 | Close catalog | ⇧⌘W | Ctrl+Shift+W |
+
+In the file tree: arrows move and open/close folders, Home/End and Page
+Up/Down jump, Enter opens a folder, the context-menu key or Shift+F10 opens
+the menu on the selection, Escape closes it.
 
 ## Data format
 

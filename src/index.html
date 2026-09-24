@@ -11,6 +11,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>archivo</title>
 <style>
@@ -638,7 +639,6 @@ body{background:var(--page);color:var(--text);font-family:var(--font);-webkit-fo
   font-family:var(--font);font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:none;color:var(--green);}
 .btn-p:hover{background:#133a26;}
 .btn-p:disabled{opacity:.35;}
-#btn-confirm-add.is-update{background:rgba(77,144,240,.14);color:var(--blue);border:none;}
 .btn-r{background:rgba(242,85,90,.14);border:none;border-radius:10px;padding:10px 14px;
   font-family:var(--font);font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--red);}
 .btn-r:hover{background:rgba(242,85,90,.22);}
@@ -768,6 +768,43 @@ body{background:var(--page);color:var(--text);font-family:var(--font);-webkit-fo
 /* Focus clavier : l'autre contour autorisé */
 button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);}
 /* ═══ fin du bloc CHARTE UI NOAR ═══ */
+
+/* ═══ 1.4.0 · boutons réels, clavier, états ═══ */
+/* Les commandes sont de vrais boutons (clavier, lecteurs d'écran) : on
+   neutralise l'habillage par défaut du navigateur, la charte fait le reste. */
+.btn{background:transparent;color:inherit;font:inherit;}
+.btn:disabled{opacity:.35;cursor:default;}
+.btn:disabled:hover{background:transparent;}
+.btn:disabled:hover .btn-ic{color:var(--text2);}
+.sf{background:transparent;cursor:pointer;}
+.cx{width:100%;background:transparent;border:none;text-align:left;cursor:pointer;}
+.cx:disabled{opacity:.4;cursor:default;}
+.cx:disabled:hover{background:transparent;}
+.rc{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;}
+.exp-opt{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;}
+#search-clear{align-items:center;justify-content:center;}
+.add-ref:disabled{opacity:.35;cursor:default;}
+#vol-list.locked .vol-item{pointer-events:none;}
+#vol-list.locked .vol-item:not(.sel){opacity:.5;}
+/* pastille « détecté automatiquement » : le vert de la charte, pas une valeur en dur */
+.auto-ic{flex-shrink:0;display:block;color:var(--green);}
+/* « Update existing » : une décision qui remplace des données, donc orange */
+#btn-confirm-add.is-update{background:rgba(242,160,61,.14);color:var(--orange);border:none;}
+#btn-confirm-add.is-update:hover{background:rgba(242,160,61,.22);}
+/* à surveiller : scan partiel, avertissement */
+.toast.warn{border:none;color:var(--orange);}
+.iv.warn{color:var(--orange);}
+/* recherche sans résultat : un vrai message, comme le catalogue vide */
+.srch-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  min-height:180px;height:100%;padding:24px;font-family:var(--font);font-size:12.5px;color:var(--text3);text-align:center;}
+.srch-empty .ico{color:var(--text4);}
+.srch-empty-s{font-size:11.5px;color:var(--text4);}
+/* focus clavier : même liseré partout */
+#tree-scroll:focus{outline:none;}
+#tree-scroll:focus-visible{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}
+.sr:focus-visible,.rc:focus-visible,.vol-item:focus-visible,.exp-opt:focus-visible,.ch:focus-visible,
+.sb-link:focus-visible,.about-lk:focus-visible,#search-clear:focus-visible,.sf:focus-visible{outline:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);}
+
 </style>
 </head>
 <body>
@@ -777,7 +814,7 @@ button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shado
   <div class="wb">
     <img src="assets/app-icon.png" class="welcome-icon" alt="" />
     <div class="wt">archivo</div>
-    <div class="ws" id="welcome-ver">v1.3.3 · Hard Disk Catalog</div>
+    <div class="ws" id="welcome-ver">v1.4.0 · Hard Disk Catalog</div>
     <div class="wbtns">
       <button class="wbp" id="btn-load-db">Open catalog</button>
       <button class="wbg" id="btn-start-empty">New empty catalog</button>
@@ -804,42 +841,42 @@ button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shado
 
 <!-- TOOLBAR -->
 <div id="toolbar">
-  <div class="btn prim" id="btn-add-disk">
+  <button type="button" class="btn prim" id="btn-add-disk">
     <div class="btn-ic" data-ico="plus" data-size="20"></div>
-    <div class="btn-lb">Add Disk</div>
-  </div>
+    <div class="btn-lb">Add disk</div>
+  </button>
   <div class="tsep"></div>
-  <div class="btn" id="btn-import">
+  <button type="button" class="btn" id="btn-import">
     <div class="btn-ic" data-ico="folder-open" data-size="20"></div>
-    <div class="btn-lb">Open Catalog</div>
-  </div>
-  <div class="btn" id="btn-export">
+    <div class="btn-lb">Open catalog</div>
+  </button>
+  <button type="button" class="btn" id="btn-export">
     <div class="btn-ic" data-ico="save" data-size="20"></div>
-    <div class="btn-lb">Save Catalog</div>
-  </div>
-  <div class="btn" id="btn-close">
+    <div class="btn-lb">Save catalog</div>
+  </button>
+  <button type="button" class="btn" id="btn-close">
     <div class="btn-ic" data-ico="x" data-size="20"></div>
-    <div class="btn-lb">Close Catalog</div>
-  </div>
+    <div class="btn-lb">Close catalog</div>
+  </button>
   <div class="tsep"></div>
-  <div class="btn" id="btn-export-data">
+  <button type="button" class="btn" id="btn-export-data">
     <div class="btn-ic" data-ico="download" data-size="20"></div>
     <div class="btn-lb">Export</div>
-  </div>
+  </button>
   <div class="tsep"></div>
-  <div class="btn" id="btn-delete">
+  <button type="button" class="btn" id="btn-delete">
     <div class="btn-ic" data-ico="trash-2" data-size="20"></div>
     <div class="btn-lb">Delete</div>
-  </div>
+  </button>
   <div class="tsep"></div>
-  <div class="btn" id="btn-inspector">
+  <button type="button" class="btn" id="btn-inspector">
     <div class="btn-ic" data-ico="panel-right" data-size="20"></div>
     <div class="btn-lb">Inspector</div>
-  </div>
+  </button>
   <div id="search-zone">
     <span id="search-ic" data-ico="search" data-size="15"></span>
-    <input id="search-inp" placeholder="Search catalog…" />
-    <span id="search-clear" role="button" tabindex="0" aria-label="Clear search" title="Clear search" data-ico="x" data-size="14"></span>
+    <input id="search-inp" placeholder="Search catalog…" aria-label="Search catalog" />
+    <button type="button" id="search-clear" aria-label="Clear search" title="Clear search" data-ico="x" data-size="14"></button>
   </div>
 </div>
 
@@ -852,23 +889,23 @@ button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shado
       <div class="ch ch-sz" id="ch-size">Size<span id="sa-size"></span><div class="crh" id="crh-size"></div></div>
       <div class="ch ch-fr" id="ch-free">Free<span id="sa-free"></span><div class="crh" id="crh-free"></div></div>
       <div class="ch ch-kd">Kind<div class="crh" id="crh-kind"></div></div>
-      <div class="ch ch-dt" id="ch-date">Date Modified<span id="sa-date"></span><div class="crh" id="crh-date"></div></div>
+      <div class="ch ch-dt" id="ch-date">Date modified<span id="sa-date"></span><div class="crh" id="crh-date"></div></div>
       <div class="ch ch-nt">Comments</div>
     </div>
     <div id="pathbar"></div>
     <div id="tree-wrap">
-      <div id="tree-scroll"><div id="tree-body"></div></div>
+      <div id="tree-scroll" tabindex="0" role="tree" aria-label="Catalog"><div id="tree-body"></div></div>
       <div id="srch-panel">
         <div class="srch-hdr">
           <span id="sc"></span>
           <div style="display:flex;gap:4px;">
-            <div class="sf on" data-f="all">All</div>
-            <div class="sf" data-f="folder">Folders</div>
-            <div class="sf" data-f="video">Video</div>
-            <div class="sf" data-f="image">Images</div>
-            <div class="sf" data-f="audio">Audio</div>
-            <div class="sf" data-f="archive">Archives</div>
-            <div class="sf" data-f="doc">Docs</div>
+            <button type="button" class="sf on" data-f="all" aria-pressed="true">All</button>
+            <button type="button" class="sf" data-f="folder" aria-pressed="false">Folders</button>
+            <button type="button" class="sf" data-f="video" aria-pressed="false">Video</button>
+            <button type="button" class="sf" data-f="image" aria-pressed="false">Images</button>
+            <button type="button" class="sf" data-f="audio" aria-pressed="false">Audio</button>
+            <button type="button" class="sf" data-f="archive" aria-pressed="false">Archives</button>
+            <button type="button" class="sf" data-f="doc" aria-pressed="false">Docs</button>
           </div>
           <button class="srch-close" id="btn-srch-close">Clear</button>
         </div>
@@ -885,7 +922,7 @@ button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shado
 
 <!-- STATUS BAR -->
 <div id="sb">
-  <span class="sb-ver" id="sb-ver">v1.3.3</span>
+  <span class="sb-ver" id="sb-ver">v1.4.0</span>
   <a class="sb-link" id="sb-github">GitHub</a>
   <a class="sb-link" id="sb-about">About</a>
   <span id="sb-sel">No selection</span>
@@ -897,7 +934,7 @@ button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shado
   <div class="about-card">
     <img src="assets/app-icon.png" class="about-icon" alt="" />
     <div class="about-name">archivo</div>
-    <div class="about-ver" id="about-ver">v1.3.3</div>
+    <div class="about-ver" id="about-ver">v1.4.0</div>
     <div class="about-desc">Catalogue your archive drives once, search them all offline.</div>
     <div class="about-gpl">
       Free software under the <strong>GNU General Public License v3</strong>.<br>
@@ -917,14 +954,14 @@ button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shado
 <div id="exp-ov">
   <div class="exp-card">
     <div class="exp-title">Export catalog</div>
-    <div class="exp-opt" id="exp-csv"><span data-ico="file-spreadsheet" data-size="18"></span><div>
+    <button type="button" class="exp-opt" id="exp-csv"><span data-ico="file-spreadsheet" data-size="18"></span><div>
       <div class="exp-opt-t">CSV — for Google Sheets</div>
       <div class="exp-opt-d">A flat list of every file (disk, path, size, date). Import it into Google Sheets or Excel to share with your team.</div>
-    </div></div>
-    <div class="exp-opt" id="exp-html"><span data-ico="globe" data-size="18"></span><div>
+    </div></button>
+    <button type="button" class="exp-opt" id="exp-html"><span data-ico="globe" data-size="18"></span><div>
       <div class="exp-opt-t">HTML — standalone web viewer</div>
       <div class="exp-opt-d">A single searchable file, viewable in any browser, no install needed. Share it directly with your team.</div>
-    </div></div>
+    </div></button>
     <button class="about-close" id="exp-cancel">Cancel</button>
   </div>
 </div>
@@ -936,7 +973,7 @@ button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shado
     <div class="add-sub">Select a mounted volume. archivo reads its info and scans all files automatically.</div>
     <div class="add-vol-hdr">
       <span class="add-vol-lbl">MOUNTED VOLUMES</span>
-<button class="add-ref" id="btn-hide-system" style="margin-right:4px;">Hide System</button><button class="add-ref" id="btn-hide-network" style="margin-right:4px;">Hide Network</button><button class="add-ref" id="btn-refresh-vols">Refresh</button>
+<button class="add-ref" id="btn-hide-system" aria-pressed="false" style="margin-right:4px;">Hide system</button><button class="add-ref" id="btn-hide-network" aria-pressed="false" style="margin-right:4px;">Hide network</button><button class="add-ref" id="btn-refresh-vols">Refresh</button>
     </div>
     <div id="vol-list"><div style="padding:16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dm);">Click Refresh to list volumes…</div></div>
     <div class="add-fl">
@@ -949,21 +986,21 @@ button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shado
     </div>
     <div class="add-row">
       <div class="add-fl">
-        <div class="add-lbl">MODEL <svg width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="detected automatically" style="flex-shrink:0;display:block;"><circle cx="12" cy="12" r="10" fill="none" stroke="#35c98b" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="#35c98b" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
+        <div class="add-lbl">MODEL <svg class="auto-ic" width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="Detected automatically"><title>Detected automatically</title><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="currentColor" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
         <input class="add-in" id="add-model" readonly placeholder="—" />
       </div>
       <div class="add-fl">
-        <div class="add-lbl">SERIAL <svg width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="detected automatically" style="flex-shrink:0;display:block;"><circle cx="12" cy="12" r="10" fill="none" stroke="#35c98b" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="#35c98b" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
+        <div class="add-lbl">SERIAL <svg class="auto-ic" width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="Detected automatically"><title>Detected automatically</title><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="currentColor" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
         <input class="add-in" id="add-serial" readonly placeholder="—" />
       </div>
     </div>
     <div class="add-row">
       <div class="add-fl">
-        <div class="add-lbl">TOTAL <svg width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="detected automatically" style="flex-shrink:0;display:block;"><circle cx="12" cy="12" r="10" fill="none" stroke="#35c98b" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="#35c98b" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
+        <div class="add-lbl">TOTAL <svg class="auto-ic" width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="Detected automatically"><title>Detected automatically</title><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="currentColor" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
         <input class="add-in" id="add-total" readonly placeholder="—" />
       </div>
       <div class="add-fl">
-        <div class="add-lbl">FREE <svg width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="detected automatically" style="flex-shrink:0;display:block;"><circle cx="12" cy="12" r="10" fill="none" stroke="#35c98b" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="#35c98b" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
+        <div class="add-lbl">FREE <svg class="auto-ic" width="12" height="12" viewBox="0 0 24 24" role="img" aria-label="Detected automatically"><title>Detected automatically</title><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="12" text-anchor="middle" dominant-baseline="central" fill="currentColor" font-size="13" font-weight="700" font-family="-apple-system,system-ui,sans-serif">A</text></svg></div>
         <input class="add-in" id="add-free" readonly placeholder="—" />
       </div>
     </div>
@@ -985,16 +1022,15 @@ button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shado
 </div>
 
 <!-- CONTEXT MENU -->
-<div id="ctx">
-  <div class="cx" id="ctx-update"><span data-ico="refresh-cw" data-size="14"></span>Update from disk</div>
+<div id="ctx" role="menu" aria-label="Actions">
+  <button type="button" role="menuitem" class="cx" id="ctx-update"><span data-ico="refresh-cw" data-size="14"></span>Update from disk</button>
   <div class="cxs" id="ctx-sep-upd"></div>
-  <div class="cx" id="ctx-rename"><span data-ico="pencil" data-size="14"></span>Rename disk</div>
-  <div class="cx" id="ctx-note"><span data-ico="message-square" data-size="14"></span>Edit note</div>
+  <button type="button" role="menuitem" class="cx" id="ctx-rename"><span data-ico="pencil" data-size="14"></span>Rename disk</button>
+  <button type="button" role="menuitem" class="cx" id="ctx-note"><span data-ico="message-square" data-size="14"></span>Edit note</button>
   <div class="cxs" id="ctx-sep"></div>
-  <div class="cx" id="ctx-reveal"><span data-ico="folder-search" data-size="14"></span>Reveal in Finder</div>
-  <div class="cx" id="ctx-open"><span data-ico="external-link" data-size="14"></span>Open</div>
-  <div class="cxs"></div>
-  <div class="cx del" id="ctx-del"><span data-ico="circle-x" data-size="14"></span>Remove from catalog</div>
+  <button type="button" role="menuitem" class="cx" id="ctx-reveal"><span data-ico="folder-search" data-size="14"></span><span id="ctx-reveal-lb">Reveal in Finder</span></button>
+  <div class="cxs" id="ctx-sep-del"></div>
+  <button type="button" role="menuitem" class="cx del" id="ctx-del"><span data-ico="circle-x" data-size="14"></span>Remove from catalog</button>
 </div>
 
 <!-- CONFIRM MODAL -->
@@ -1009,1568 +1045,6 @@ button:focus-visible,.btn:focus-visible,.cx:focus-visible{outline:none;box-shado
 <!-- TOASTS -->
 <div id="toasts"></div>
 
-<script>
-'use strict';
-
-/* Icônes Lucide (ISC, lucide.dev), chemins repris tels quels de lucide-static 0.460.0.
-   Ne jamais redessiner une icône à la main : en ajouter une = copier son contenu SVG ici. */
-const LUCIDE = {
-  "plus": "<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />",
-  "folder-open": "<path d=\"m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2\" />",
-  "save": "<path d=\"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z\" /> <path d=\"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7\" /> <path d=\"M7 3v4a1 1 0 0 0 1 1h7\" />",
-  "x": "<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />",
-  "download": "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\" /> <polyline points=\"7 10 12 15 17 10\" /> <line x1=\"12\" x2=\"12\" y1=\"15\" y2=\"3\" />",
-  "trash-2": "<path d=\"M3 6h18\" /> <path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\" /> <path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\" /> <line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\" /> <line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\" />",
-  "panel-right": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" /> <path d=\"M15 3v18\" />",
-  "search": "<circle cx=\"11\" cy=\"11\" r=\"8\" /> <path d=\"m21 21-4.3-4.3\" />",
-  "film": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" /> <path d=\"M7 3v18\" /> <path d=\"M3 7.5h4\" /> <path d=\"M3 12h18\" /> <path d=\"M3 16.5h4\" /> <path d=\"M17 3v18\" /> <path d=\"M17 7.5h4\" /> <path d=\"M17 16.5h4\" />",
-  "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\" /> <circle cx=\"9\" cy=\"9\" r=\"2\" /> <path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\" />",
-  "music": "<path d=\"M9 18V5l12-2v13\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <circle cx=\"18\" cy=\"16\" r=\"3\" />",
-  "file-archive": "<path d=\"M10 12v-1\" /> <path d=\"M10 18v-2\" /> <path d=\"M10 7V6\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" /> <path d=\"M15.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v16a2 2 0 0 0 .274 1.01\" /> <circle cx=\"10\" cy=\"20\" r=\"2\" />",
-  "file-text": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" /> <path d=\"M10 9H8\" /> <path d=\"M16 13H8\" /> <path d=\"M16 17H8\" />",
-  "file": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" />",
-  "folder": "<path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\" />",
-  "archive": "<rect width=\"20\" height=\"5\" x=\"2\" y=\"3\" rx=\"1\" /> <path d=\"M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8\" /> <path d=\"M10 12h4\" />",
-  "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\" /> <path d=\"M2 12h20\" />",
-  "info": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" />",
-  "chevron-right": "<path d=\"m9 18 6-6-6-6\" />",
-  "chevron-down": "<path d=\"m6 9 6 6 6-6\" />",
-  "refresh-cw": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\" /> <path d=\"M21 3v5h-5\" /> <path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\" /> <path d=\"M8 16H3v5\" />",
-  "pencil": "<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\" /> <path d=\"m15 5 4 4\" />",
-  "message-square": "<path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\" />",
-  "external-link": "<path d=\"M15 3h6v6\" /> <path d=\"M10 14 21 3\" /> <path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\" />",
-  "circle-x": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"m15 9-6 6\" /> <path d=\"m9 9 6 6\" />",
-  "hard-drive": "<line x1=\"22\" x2=\"2\" y1=\"12\" y2=\"12\" /> <path d=\"M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\" /> <line x1=\"6\" x2=\"6.01\" y1=\"16\" y2=\"16\" /> <line x1=\"10\" x2=\"10.01\" y1=\"16\" y2=\"16\" />",
-  "file-spreadsheet": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" /> <path d=\"M8 13h2\" /> <path d=\"M14 13h2\" /> <path d=\"M8 17h2\" /> <path d=\"M14 17h2\" />",
-  "folder-search": "<path d=\"M10.7 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v4.1\" /> <path d=\"m21 21-1.9-1.9\" /> <circle cx=\"17\" cy=\"17\" r=\"3\" />"
-  };
-function ico(name, size){
-  const s = size || 16;
-  return '<span class="ico"><svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(LUCIDE[name]||'')+'</svg></span>';
-}
-function paintIcons(root){
-  (root||document).querySelectorAll('[data-ico]').forEach(el => {
-    el.innerHTML = ico(el.dataset.ico, +el.dataset.size || 16);
-  });
-}
-
-/* ════════════════════════════════════════════════
-   STATE
-════════════════════════════════════════════════ */
-let DB          = { disks: [] };
-let expanded    = new Set();
-let selected    = null;   // {type:'disk'|'node', disk, node?, key?}
-let appVersion  = '';
-let dismissedUpdateVersion = '';
-let ctxTarget   = null;
-let sortK       = 'name';
-let sortAsc     = true;
-let srchTimer   = null;
-let srchIndex   = [];
-let srchFilter  = 'all';
-let inspOpen    = true;
-let pendingVol  = null;
-let hideSystem  = false; // filter toggles in Add Disk modal
-let hideNetwork = false;
-
-// ── Document state ──
-let docPath     = null;  // file the catalog was opened from / saved to (null = never saved)
-let docOpen     = false; // a catalog is open (vs. the welcome screen)
-let dirty       = false; // unsaved changes since the last save
-
-const V  = new Set(['mp4','mov','avi','mkv','mxf','r3d','braw','mts','m2ts','wmv','prproj','drp','fcpbundle','aaf']);
-const I  = new Set(['jpg','jpeg','png','tif','tiff','raw','cr2','nef','arw','psd','ai','eps','svg','gif','webp','dpx','exr','heic']);
-const A  = new Set(['mp3','wav','aiff','aif','flac','aac','m4a','ogg']);
-const D  = new Set(['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','md','rtf','csv','xml','json']);
-const AR = new Set(['zip','rar','7z','tar','gz','bz2','tgz','tbz','sit','sitx','lha','lzh','z','cpgz','dmg']);
-
-
-/* ════════════════════════════════════════════════
-   TREE EVENT DELEGATION
-════════════════════════════════════════════════ */
-function getRow(e) { return e.target.closest('.tr'); }
-
-function treeClick(e) {
-  const row = getRow(e);
-  if (!row) return;
-  const did    = row.dataset.did;
-  const key    = row.dataset.key;
-  const isDisk = row.dataset.type === 'disk';
-  // Click on the toggle arrow area → expand/collapse
-  if (e.target.closest('.tr-tog')) {
-    e.stopPropagation();
-    // Only toggle if it's a disk or a directory (files have empty toggle)
-    if (isDisk) { togExp(did); selDisk(did); }
-    else if (row.dataset.file !== '1') { togExp(key); selNode(did, key); }
-    return;
-  }
-  // Click elsewhere on the row → select
-  isDisk ? selDisk(did) : selNode(did, key);
-}
-
-function treeDblClick(e) {
-  const row = getRow(e);
-  if (!row) return;
-  const did    = row.dataset.did;
-  const key    = row.dataset.key;
-  const isDisk = row.dataset.type === 'disk';
-  const isFile = row.dataset.file === '1';
-  if (isDisk) togExp(did);
-  else if (!isFile) togExp(key);
-}
-
-function treeCtx(e) {
-  const row = getRow(e);
-  if (!row) return;
-  const did    = row.dataset.did;
-  const key    = row.dataset.key;
-  const isDisk = row.dataset.type === 'disk';
-  showCtx(e, isDisk ? 'disk' : 'node', did, key);
-}
-
-
-/* ════════════════════════════════════════════════
-   KEYBOARD NAVIGATION
-════════════════════════════════════════════════ */
-function wireKeyboard() {
-  // Échap ferme ce qui ne fait qu'informer : À propos, Export, menu contextuel.
-  // Les fenêtres qui portent une décision (enregistrer ou non, mise à jour) gardent leurs boutons.
-  document.addEventListener('keydown', e => {
-    if (e.key !== 'Escape') return;
-    if (g('about-ov').classList.contains('open')) { g('about-ov').classList.remove('open'); e.preventDefault(); return; }
-    if (g('exp-ov').classList.contains('open'))   { g('exp-ov').classList.remove('open');   e.preventDefault(); return; }
-    if (g('ctx').style.display === 'block')       { g('ctx').style.display = 'none';        e.preventDefault(); }
-  });
-  document.addEventListener('keydown', e => {
-    // Don't intercept when typing in inputs
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    if (!selected) return;
-
-    const rows  = Array.from(g('tree-body').querySelectorAll('.tr'));
-    const selRow = rows.find(r =>
-      (selected.type === 'disk' && r.dataset.type === 'disk' && r.dataset.did === selected.disk?.id) ||
-      (selected.type === 'node' && r.dataset.key === selected.key)
-    );
-    const idx = selRow ? rows.indexOf(selRow) : -1;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (idx < rows.length - 1) rows[idx + 1].click();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (idx > 0) rows[idx - 1].click();
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      if (selected.type === 'disk' && !expanded.has(selected.disk.id)) togExp(selected.disk.id);
-      else if (selected.type === 'node' && selected.node?.type === 'dir' && !expanded.has(selected.key)) togExp(selected.key);
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      if (selected.type === 'disk' && expanded.has(selected.disk.id)) togExp(selected.disk.id);
-      else if (selected.type === 'node' && selected.node?.type === 'dir' && expanded.has(selected.key)) togExp(selected.key);
-    }
-    // Scroll selected row into view
-    if (['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)) {
-      setTimeout(() => {
-        const newSel = g('tree-body').querySelector('.tr.sel');
-        if (newSel) newSel.scrollIntoView({ block: 'nearest' });
-      }, 20);
-    }
-  });
-}
-
-/* ════════════════════════════════════════════════
-   BOOT — runs immediately (script at end of body)
-════════════════════════════════════════════════ */
-(function boot() {
-  // Platform class: 'mac' keeps room for traffic lights; others use a native frame.
-  try {
-    const plat = (window.archivo && window.archivo.platform) || 'darwin';
-    document.body.classList.add(plat === 'darwin' ? 'plat-mac' : 'plat-other');
-  } catch (e) { document.body.classList.add('plat-mac'); }
-  paintIcons();
-  wireButtons();
-  wireSearch();
-  wireSearchFilters();
-  wireModals();
-  wireColSort();
-  wireColResize();
-  wireCtxMenu();
-  wireKeyboard();
-  wireMenu();
-  wireDragDrop();
-  startApp();
-  initUpdatesAndPrefs();
-})();
-
-async function initUpdatesAndPrefs() {
-  try {
-    if (window.archivo) {
-      appVersion = await window.archivo.appVersion();
-      const vtxt = 'v' + (appVersion || '');
-      const sv = g('sb-ver'); if (sv) sv.textContent = vtxt;
-      const av = g('about-ver'); if (av) av.textContent = vtxt;
-      const wv = g('welcome-ver'); if (wv) wv.textContent = vtxt + ' · Hard Disk Catalog';
-      const prefs = await window.archivo.loadPrefs();
-      dismissedUpdateVersion = (prefs && prefs.dismissedUpdateVersion) || '';
-      window.archivo.onUpdateAvailable(showUpdateNotice);
-    }
-  } catch (e) {}
-}
-
-function openAbout() {
-  g('about-ov').classList.add('open');
-}
-
-// CSV field: only quote when needed (comma, quote, newline) — keeps output small.
-function csvField(v) {
-  const s = String(v ?? '');
-  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-}
-
-// Flat CSV of every file across all disks: Disk, Path, Size, Modified.
-// Directories are skipped on purpose — the smallest useful export for a
-// team to search/filter in Google Sheets.
-async function exportCsv() {
-  const rows = ['Disk,Path,Size,Modified'];
-  for (const d of DB.disks) {
-    (function walk(nodes, prefix) {
-      for (const n of nodes) {
-        const full = prefix ? prefix + '/' + n.name : n.name;
-        if (n.type === 'file') {
-          rows.push([csvField(d.label), csvField(full), csvField(n.size || ''), csvField(n.modified || '')].join(','));
-        } else {
-          walk(n.children || [], full);
-        }
-      }
-    })(d.tree || [], '');
-  }
-  const content = rows.join('\n');
-  try {
-    const filePath = await window.archivo.exportText({
-      content, defaultName: 'archivo_export.csv', filterName: 'CSV', extensions: ['csv']
-    });
-    if (filePath) toast('CSV exported — ' + (rows.length - 1).toLocaleString() + ' files.', 'ok');
-  } catch (e) { toast('Export error: ' + e, 'err'); }
-}
-
-// Standalone searchable HTML viewer. Only the fields the viewer needs are
-// kept (id/source/mount path dropped) to keep the exported file small.
-async function exportHtmlViewer() {
-  // Make sure every folder's size is computed (not just the ones the user
-  // has expanded in-app) so the exported viewer shows sizes everywhere.
-  for (const d of DB.disks) for (const n of (d.tree || [])) getDirSize(n);
-  const payload = DB.disks.map(d => ({
-    label: d.label, model: d.model, serial: d.serial, total: d.total, free: d.free,
-    iface: d.iface, scanned: d.scanned, note: d.note || '', tree: d.tree || []
-  }));
-  try {
-    const filePath = await window.archivo.exportHtml({
-      json: JSON.stringify(payload), defaultName: 'archivo_export.html'
-    });
-    if (filePath) toast('HTML export saved.', 'ok');
-  } catch (e) { toast('Export error: ' + e, 'err'); }
-}
-
-function showUpdateNotice({ version, url }) {
-  if (!version || version === dismissedUpdateVersion) return;
-  if (document.getElementById('update-ov')) return;
-  const ov = document.createElement('div');
-  ov.id = 'update-ov'; ov.className = 'open';
-  ov.innerHTML =
-    '<div class="upd-card">' +
-      '<div class="upd-h">New version available</div>' +
-      '<div class="upd-sub">archivo v' + esc(version) + ' is available. You\u2019re on v' + esc(appVersion || '') + '.</div>' +
-      '<div class="upd-actions">' +
-        '<button class="upd-later" id="upd-later">Later</button>' +
-        '<button class="upd-go" id="upd-go">Get it</button>' +
-      '</div>' +
-    '</div>';
-  document.body.appendChild(ov);
-  const dismiss = () => {
-    dismissedUpdateVersion = version;
-    try { window.archivo.savePrefs({ dismissedUpdateVersion: version }); } catch (e) {}
-    ov.remove();
-  };
-  ov.querySelector('#upd-later').onclick = dismiss;
-  ov.querySelector('#upd-go').onclick = () => { try { window.archivo.openExternal(url); } catch (e) {} dismiss(); };
-  ov.onclick = (e) => { if (e.target === ov) dismiss(); };
-}
-
-/* ════════════════════════════════════════════════
-   WIRE — all event listeners attached here,
-   no inline onclick anywhere
-════════════════════════════════════════════════ */
-function wireButtons() {
-  // Welcome
-  g('btn-load-db').addEventListener('click',     () => openCatalog());
-  g('btn-start-empty').addEventListener('click', () => newCatalog());
-  // Toolbar
-  g('btn-add-disk').addEventListener('click',   showAddDisk);
-  g('btn-import').addEventListener('click',     () => openCatalog());
-  g('btn-export').addEventListener('click',     () => saveCatalog());
-  g('btn-close').addEventListener('click',      closeDatabase);
-
-  // Footer: GitHub link + About modal
-  const REPO_URL = 'https://github.com/noar-justedit/archivo';
-  g('sb-github').addEventListener('click', () => { try { window.archivo.openExternal(REPO_URL); } catch(e){} });
-  g('sb-about').addEventListener('click', openAbout);
-  g('about-close').addEventListener('click', () => g('about-ov').classList.remove('open'));
-  g('about-ov').addEventListener('click', e => { if (e.target === g('about-ov')) g('about-ov').classList.remove('open'); });
-  g('about-repo').addEventListener('click', () => { try { window.archivo.openExternal(REPO_URL); } catch(e){} });
-  g('about-license').addEventListener('click', () => { try { window.archivo.openExternal(REPO_URL + '/blob/main/LICENSE'); } catch(e){} });
-
-  // Export (CSV / HTML)
-  g('btn-export-data').addEventListener('click', () => {
-    if (!DB.disks.length) { toast('Nothing to export yet.', 'info'); return; }
-    g('exp-ov').classList.add('open');
-  });
-  g('exp-cancel').addEventListener('click', () => g('exp-ov').classList.remove('open'));
-  g('exp-ov').addEventListener('click', e => { if (e.target === g('exp-ov')) g('exp-ov').classList.remove('open'); });
-  g('exp-csv').addEventListener('click', async () => { g('exp-ov').classList.remove('open'); await exportCsv(); });
-  g('exp-html').addEventListener('click', async () => { g('exp-ov').classList.remove('open'); await exportHtmlViewer(); });
-  g('btn-delete').addEventListener('click',     deleteSelected);
-  g('btn-inspector').addEventListener('click',  toggleInspector);
-  // Add disk modal
-  g('btn-refresh-vols').addEventListener('click', refreshVols);
-  g('btn-hide-system').addEventListener('click', () => {
-    hideSystem = !hideSystem;
-    g('btn-hide-system').classList.toggle('active', hideSystem);
-    refreshVols();
-  });
-  g('btn-hide-network').addEventListener('click', () => {
-    hideNetwork = !hideNetwork;
-    g('btn-hide-network').classList.toggle('active', hideNetwork);
-    refreshVols();
-  });
-  g('btn-cancel-add').addEventListener('click',   hideAddDisk);
-  g('btn-cancel-scan').addEventListener('click',  cancelScan);
-  g('btn-confirm-add').addEventListener('click',  confirmAddDisk);
-  // Search clear
-  g('search-clear').addEventListener('click', clearSearch);
-  g('btn-srch-close').addEventListener('click', clearSearch);
-  // Context menu items
-  g('ctx-update').addEventListener('click', ctxUpdate);
-  g('ctx-rename').addEventListener('click', ctxRename);
-  g('ctx-note').addEventListener('click',   ctxNote);
-  g('ctx-reveal').addEventListener('click', ctxReveal);
-  g('ctx-open').addEventListener('click',   ctxOpen);
-  g('ctx-del').addEventListener('click',    ctxDelete);
-
-  // Tree event delegation on #tree-scroll (stable parent — never replaced by innerHTML)
-  const treeScroll = g('tree-scroll');
-  treeScroll.addEventListener('click',       treeClick);
-  treeScroll.addEventListener('dblclick',    treeDblClick);
-  treeScroll.addEventListener('contextmenu', treeCtx);
-}
-
-function wireSearch() {
-  const inp  = g('search-inp');
-  const zone = g('search-zone');
-  // Prevent ctx-close listener from swallowing search zone clicks
-  zone.addEventListener('click',     e => e.stopPropagation());
-  zone.addEventListener('mousedown', e => e.stopPropagation());
-  inp.addEventListener('input',   e => onSearch(e.target.value));
-  inp.addEventListener('keydown', e => { if (e.key === 'Escape') clearSearch(); });
-}
-
-function wireSearchFilters() {
-  document.querySelectorAll('.sf').forEach(el => {
-    el.addEventListener('click', () => {
-      document.querySelectorAll('.sf').forEach(x => x.classList.remove('on'));
-      el.classList.add('on');
-      srchFilter = el.dataset.f;
-      const q = g('search-inp').value;
-      if (q.trim().length >= 2) execSearch(q);
-    });
-  });
-}
-
-function wireModals() {
-  g('mw').addEventListener('click', e => { if (e.target === g('mw')) hideModal(); });
-  g('add-modal').addEventListener('click', e => { if (e.target === g('add-modal')) hideAddDisk(); });
-}
-
-function wireColSort() {
-  [['ch-name','name'],['ch-size','size'],['ch-free','free'],['ch-date','date']].forEach(([id,k]) => {
-    g(id).addEventListener('click', e => {
-      if (!e.target.classList.contains('crh')) sortBy(k);
-    });
-  });
-}
-
-function wireColResize() {
-  const map = { 'crh-name':'--wnm', 'crh-size':'--ws','crh-free':'--wf','crh-kind':'--wk','crh-date':'--wd' };
-  let rz = null;
-  Object.entries(map).forEach(([id, cssVar]) => {
-    const handle = g(id);
-    if (!handle) return;
-    handle.addEventListener('mousedown', e => {
-      e.preventDefault(); e.stopPropagation();
-      const sw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(cssVar)) || 120;
-      rz = { cssVar, sx: e.clientX, sw };
-      handle.classList.add('dragging');
-    });
-  });
-  document.addEventListener('mousemove', e => {
-    if (!rz) return;
-    const nw = Math.max(60, rz.sw + (e.clientX - rz.sx));
-    document.documentElement.style.setProperty(rz.cssVar, nw + 'px');
-  });
-  document.addEventListener('mouseup', () => {
-    if (rz) { document.querySelectorAll('.crh').forEach(c => c.classList.remove('dragging')); rz = null; }
-  });
-}
-
-/* ════════════════════════════════════════════════
-   APPLICATION MENU BRIDGE
-   Keyboard shortcuts live in the native menu (main.js); every command
-   lands here so the renderer keeps ownership of the catalog.
-════════════════════════════════════════════════ */
-function wireMenu() {
-  if (!window.archivo || !window.archivo.onMenuCommand) return;
-  window.archivo.onMenuCommand(async ({ cmd, arg }) => {
-    switch (cmd) {
-      case 'new':       newCatalog(); break;
-      case 'open':      openCatalog(); break;
-      case 'open-path': openCatalog(arg); break;
-      case 'save':      saveCatalog(); break;
-      case 'save-as':   saveCatalogAs(); break;
-      case 'close-doc': closeDatabase(); break;
-      case 'add-disk':  if (docOpen) showAddDisk(); break;
-      case 'export':    if (docOpen && DB.disks.length) g('exp-ov').classList.add('open'); break;
-      case 'about':     openAbout(); break;
-      case 'toggle-inspector': if (docOpen) toggleInspector(); break;
-      case 'focus-search':     { const i = g('search-inp'); if (i) { i.focus(); i.select(); } break; }
-      // The window is closing and the catalog is dirty: save, then let go.
-      case 'save-and-close': {
-        const ok = await saveCatalog();
-        try { await window.archivo.forceClose(ok); } catch (e) {}
-        break;
-      }
-    }
-  });
-  if (window.archivo.onUpdateNone) {
-    window.archivo.onUpdateNone(d => {
-      toast(d && d.failed ? 'Update check failed — check your connection.'
-                          : 'archivo is up to date (v' + (appVersion || '') + ').',
-            d && d.failed ? 'err' : 'ok');
-    });
-  }
-}
-
-/* ════════════════════════════════════════════════
-   DRAG & DROP — drop a .archivo file anywhere to open it
-════════════════════════════════════════════════ */
-function wireDragDrop() {
-  let depth = 0;
-  const isFileDrag = e => Array.from(e.dataTransfer?.types || []).includes('Files');
-
-  document.addEventListener('dragenter', e => {
-    if (!isFileDrag(e)) return;
-    e.preventDefault();
-    depth++;
-    document.body.classList.add('dragging');
-  });
-  document.addEventListener('dragover', e => { if (isFileDrag(e)) e.preventDefault(); });
-  document.addEventListener('dragleave', e => {
-    if (!isFileDrag(e)) return;
-    if (--depth <= 0) { depth = 0; document.body.classList.remove('dragging'); }
-  });
-  document.addEventListener('drop', e => {
-    if (!isFileDrag(e)) return;
-    e.preventDefault();
-    depth = 0;
-    document.body.classList.remove('dragging');
-    const file = e.dataTransfer.files && e.dataTransfer.files[0];
-    if (!file) return;
-    let p = '';
-    try { p = window.archivo.pathForFile(file) || ''; } catch (err) {}
-    if (!p) { toast('Could not read the dropped file.', 'err'); return; }
-    if (!/\.(archivo|json|gz)$/i.test(p)) { toast('Drop an .archivo catalog file.', 'err'); return; }
-    openCatalog(p);
-  });
-}
-
-function wireCtxMenu() {
-  // Close ctx menu on any click outside it — but never intercept input clicks
-  document.body.addEventListener('click', e => {
-    const ctx = g('ctx');
-    if (ctx && !ctx.contains(e.target)) ctx.style.display = 'none';
-  }, true); // capture phase so it runs first but doesn't preventDefault
-}
-
-/* ════════════════════════════════════════════════
-   APP START
-════════════════════════════════════════════════ */
-async function startApp() {
-  if (!window.archivo) {
-    await delay(100);
-    if (!window.archivo) {
-      showWelcome();
-      toast('Electron preload not found. Try rebuilding.', 'err');
-      return;
-    }
-  }
-  // Always start on the welcome screen — unless the OS handed us a file to
-  // open (double-clicked .archivo, "Open With", drag onto the app icon).
-  DB = { disks: [] };
-  docPath = null; docOpen = false; dirty = false;
-  showWelcome();
-  refreshRecents();
-
-  // Scan progress events
-  window.archivo.onScanProgress(p => {
-    updateScanProgress(p);
-  });
-
-  // Files the OS asks us to open, now and later.
-  window.archivo.onOpenRequest(p => { if (p) openCatalog(p); });
-  let launchFile = null;
-  try { launchFile = await window.archivo.docReady(); } catch (e) {}
-  if (launchFile) openCatalog(launchFile);
-}
-
-/* ════════════════════════════════════════════════
-   WELCOME
-════════════════════════════════════════════════ */
-function showWelcome() { g('welcome').style.display = 'flex'; refreshRecents(); }
-function hideWelcome() { g('welcome').style.display = 'none'; }
-
-async function refreshRecents() {
-  const el = g('recent-list');
-  if (!el || !window.archivo || !window.archivo.recents) return;
-  let list = [];
-  try { list = await window.archivo.recents(); } catch (e) { list = []; }
-  if (!list.length) { el.innerHTML = ''; return; }
-  el.innerHTML = '<div class="rc-h">Recent</div>' +
-    list.slice(0, 5).map(p =>
-      '<div class="rc" data-p="' + esc(p) + '" title="' + esc(p) + '">' +
-        '<span class="rc-n">' + esc(p.split(/[\\/]/).pop()) + '</span>' +
-        '<span class="rc-p">' + esc(p) + '</span>' +
-      '</div>').join('') +
-    '<button class="rc-clear" id="rc-clear">Clear list</button>';
-  el.querySelectorAll('.rc').forEach(x =>
-    x.addEventListener('click', () => openCatalog(x.dataset.p)));
-  const cl = g('rc-clear');
-  if (cl) cl.addEventListener('click', async () => {
-    try { await window.archivo.clearRecents(); } catch (e) {}
-    refreshRecents();
-  });
-}
-
-/* ════════════════════════════════════════════════
-   DOCUMENT — new / open / save / save as / close
-   One catalog is open at a time. `dirty` tracks unsaved changes; every
-   mutation calls markDirty(), and anything that would throw the catalog
-   away goes through guardUnsaved() first.
-════════════════════════════════════════════════ */
-function docName() { return docPath ? docPath.split(/[\\/]/).pop() : 'Untitled catalog'; }
-
-function updateTitleBar() {
-  const el = g('tb-dbname');
-  if (!el) return;
-  if (!docOpen) { el.textContent = 'No catalog loaded'; return; }
-  const n = DB.disks.length;
-  el.innerHTML = (dirty ? '<span class="dot">●</span>' : '') +
-    esc(docName()) + ' · ' + n + ' disk' + (n !== 1 ? 's' : '');
-}
-
-function markDirty() {
-  if (!dirty) { dirty = true; try { window.archivo.setDirty(true); } catch (e) {} }
-  updateTitleBar();
-}
-function markClean() {
-  dirty = false;
-  try { window.archivo.setDirty(false); } catch (e) {}
-  updateTitleBar();
-}
-
-// Run `next` only once the user has dealt with unsaved changes.
-function guardUnsaved(next) {
-  if (!dirty) { next(); return; }
-  showModal('Unsaved changes',
-    'Save changes to <strong>' + esc(docName()) + '</strong> before continuing?<br>' +
-    '<span style="color:var(--dm);font-size:12px;">If you don\'t save, your changes will be lost.</span>',
-    [
-      { label:"Don't Save", cls:'btn-r', fn:()=>{ hideModal(); markClean(); next(); } },
-      { label:'Cancel',     cls:'btn-g', fn:hideModal },
-      { label:'Save',       cls:'btn-p', fn:async()=>{ hideModal(); if (await saveCatalog()) next(); } },
-    ]);
-}
-
-function newCatalog() {
-  guardUnsaved(async () => {
-    try { await window.archivo.newDocument(); } catch (e) {}
-    DB = { disks: [] };
-    docPath = null; docOpen = true;
-    selected = null; expanded.clear(); clearSearch();
-    hideWelcome(); refreshAll(); updatePathBar(); markClean();
-    toast('New catalog. Add a disk to begin.', 'info');
-  });
-}
-
-// filePath omitted → file dialog. Given → opens straight away.
-function openCatalog(filePath) {
-  guardUnsaved(async () => {
-    try {
-      const res = await window.archivo.openCatalog(filePath || undefined);
-      if (!res) return;
-      DB = res.data;
-      docPath = res.path; docOpen = true;
-      selected = null; expanded.clear(); clearSearch();
-      hideWelcome(); refreshAll(); updatePathBar(); markClean();
-      toast('Opened ' + DB.disks.length + ' disk(s).', 'ok');
-    } catch (e) { toast('Open error: ' + e, 'err'); }
-  });
-}
-
-// Save in place when the catalog has a file; otherwise fall through to Save As.
-async function saveCatalog() {
-  if (!docOpen) { toast('No catalog open.', 'err'); return false; }
-  try {
-    const res = await window.archivo.saveCatalog(DB);
-    if (res && res.needsPath) return await saveCatalogAs();
-    if (!res || !res.path) return false;
-    docPath = res.path; markClean(); refreshRecents();
-    toast('Saved · ' + docName(), 'ok');
-    return true;
-  } catch (e) { toast('Save error: ' + e, 'err'); return false; }
-}
-
-async function saveCatalogAs() {
-  if (!docOpen) { toast('No catalog open.', 'err'); return false; }
-  try {
-    const base = docName().replace(/\.(archivo|json|gz)$/i, '');
-    const res  = await window.archivo.saveCatalogAs({
-      catalog: DB,
-      suggestedName: (base === 'Untitled catalog' ? 'archivo_catalog' : base) + '.archivo',
-    });
-    if (!res || !res.path) return false;
-    docPath = res.path; markClean(); refreshRecents();
-    toast('Saved · ' + docName(), 'ok');
-    return true;
-  } catch (e) { toast('Save error: ' + e, 'err'); return false; }
-}
-
-function closeDatabase() {
-  guardUnsaved(async () => {
-    try { await window.archivo.closeDocument(); } catch (e) {}
-    DB = { disks: [] };
-    docPath = null; docOpen = false;
-    selected = null; expanded.clear(); clearSearch();
-    renderTree(); updateInsp(); updateSB(); updatePathBar(); markClean();
-    showWelcome();
-  });
-}
-/* ════════════════════════════════════════════════
-   REFRESH
-════════════════════════════════════════════════ */
-function refreshAll() {
-  renderTree();
-  buildIndex();
-  updateSB();
-  updateInsp();
-  updateTitleBar();
-}
-
-/* ════════════════════════════════════════════════
-   SORT
-════════════════════════════════════════════════ */
-function sortBy(k) {
-  if (sortK === k) sortAsc = !sortAsc; else { sortK = k; sortAsc = true; }
-  ['name','size','free','date'].forEach(x => {
-    const el = g('sa-' + x);
-    if (el) el.textContent = sortK === x ? (sortAsc ? ' ↑' : ' ↓') : '';
-  });
-  renderTree();
-}
-function sorted() {
-  const d = [...DB.disks], dir = sortAsc ? 1 : -1;
-  switch(sortK) {
-    case 'size': return d.sort((a,b)=>(pgb(a.total)-pgb(b.total))*dir);
-    case 'free': return d.sort((a,b)=>(pgb(a.free)-pgb(b.free))*dir);
-    case 'date': return d.sort((a,b)=>(a.scanned||'').localeCompare(b.scanned||'')*dir);
-    default:     return d.sort((a,b)=>a.label.localeCompare(b.label)*dir);
-  }
-}
-
-/* ════════════════════════════════════════════════
-   TREE RENDER
-════════════════════════════════════════════════ */
-function renderTree() {
-  const body = g('tree-body');
-  if (!DB.disks.length) {
-    body.innerHTML = '<div class="empty"><div class="empty-ic">' + ico('archive', 34) + '</div><div>No disks in this catalog yet</div><div style="display:flex;gap:8px;margin-top:6px;"><button class="cta" id="et-add">Add a disk</button><button class="cta2" id="et-import">Open a catalog</button></div></div>';
-    g('et-add').addEventListener('click', showAddDisk);
-    g('et-import').addEventListener('click', () => openCatalog());
-    return;
-  }
-  const rows = [];
-  for (const disk of sorted()) {
-    rows.push(diskRow(disk));
-    if (expanded.has(disk.id)) childRows(rows, disk.tree || [], disk, 1, disk.id);
-  }
-  body.innerHTML = rows.join('');
-  // NOTE: events are wired once in wireButtons() via delegation on #tree-wrap,
-  // which is a stable parent that survives tree-body innerHTML replacements.
-}
-
-function pctN(d) { const t=pgb(d.total),f=pgb(d.free); return t&&f?Math.min(100,Math.round((t-f)/t*100)):0; }
-function fcC(p)  { return p>=90?'fc90':p>=80?'fc80':p>=50?'fc50':'fc0'; }
-
-function diskRow(disk) {
-  const p=pctN(disk), exp=expanded.has(disk.id);
-  const sel=selected?.type==='disk'&&selected.disk.id===disk.id;
-  const freeCol=pgb(disk.free)<10?'var(--re)':pgb(disk.free)<50?'var(--ye)':'var(--mu)';
-  return `<div class="tr disk-row${sel?' sel':''}" data-type="disk" data-did="${disk.id}">
-    <div class="tr-tog">${ico(exp?'chevron-down':'chevron-right', 13)}</div>
-    <div class="tr-ic vol-svg">${volSvg(diskIconName(disk))}</div>
-    <div class="tr-nm disk">${esc(disk.label)}</div>
-    <div class="dfill-wrap"><div class="dfill-txt">${esc(disk.total||'?')}</div><div class="dfill-bar"><div class="dfill-in ${fcC(p)}" style="width:${p}%"></div></div></div>
-    <div class="tr-fr" style="color:${freeCol}">${esc(disk.free||'?')}</div>
-    <div class="tr-kd">disk</div>
-    <div class="tr-dt">${disk.scanned?disk.scanned.slice(0,10):''}</div>
-    <div class="tr-nt">${esc(disk.note||'')}</div>
-  </div>`;
-}
-
-// Parse a size value into raw bytes, whether it's already a number (new
-// scans) or a preformatted string like "66 KB" / "1,9 MB" (legacy catalogs,
-// e.g. DiskCatalogMaker imports) — needed so folder totals can be summed.
-function toBytes(v) {
-  if (typeof v === 'number') return isFinite(v) ? v : 0;
-  if (typeof v !== 'string') return 0;
-  const s = v.trim();
-  if (!s) return 0;
-  const m = s.match(/^([\d.,]+)\s*([a-zA-Z]+)$/);
-  if (!m) { const f = parseFloat(s.replace(',', '.')); return isFinite(f) ? f : 0; }
-  const num = parseFloat(m[1].replace(',', '.'));
-  if (!isFinite(num)) return 0;
-  const mult = { b:1, byte:1, bytes:1, kb:1024, mb:1024**2, gb:1024**3, tb:1024**4 }[m[2].toLowerCase()];
-  return mult ? num * mult : num;
-}
-
-// Folder size: sum of all descendant files. New scans already carry this on
-// dir nodes (as a number); for catalogs saved before that — or with legacy
-// preformatted-string sizes — compute it once here and memoize it onto the
-// node as a number, so it's O(1) after and displays correctly via fmtB().
-function getDirSize(n) {
-  if (n.type !== 'dir') return toBytes(n.size);
-  if (typeof n.size === 'number') return n.size;
-  let total = 0;
-  for (const c of (n.children || [])) total += getDirSize(c);
-  n.size = total;
-  return total;
-}
-
-function childRows(rows, nodes, disk, depth, parentKey) {
-  if (!nodes || !nodes.length) return;
-  for (const n of nodes) {
-    const isDir = n.type === 'dir';
-    // Unique key = full path from disk root. Two folders with the same name
-    // under different parents get different keys.
-    const key   = parentKey + '/' + n.name;
-    const exp   = expanded.has(key);
-    const sel   = selected?.type === 'node' && selected.key === key;
-    const icon  = isDir ? ico(exp ? 'folder-open' : 'folder', 15) : fileIcon(n.name);
-    // Indentation portée par une cale en tête de ligne, retranchée de la
-    // colonne du nom : les colonnes Taille / Type / Date restent alignées
-    // quelle que soit la profondeur (avant, toute la ligne glissait).
-    const pad   = depth * 16;
-    rows.push(
-      '<div class="tr' + (sel ? ' sel' : '') + '"' +
-      ' data-type="node"' +
-      ' data-did="' + disk.id + '"' +
-      ' data-key="' + esc(key) + '"' +
-      (isDir ? '' : ' data-file="1"') + '>' +
-      '<div style="width:' + pad + 'px;flex-shrink:0"></div>' +
-      '<div class="tr-tog">' + (isDir ? '<span data-tog="1">' + ico(exp ? 'chevron-down' : 'chevron-right', 13) + '</span>' : '') + '</div>' +
-      '<div class="tr-ic">' + icon + '</div>' +
-      '<div class="tr-nm" style="width:calc(var(--wnm) - ' + pad + 'px)">' + esc(n.name) + '</div>' +
-      '<div class="tr-sz">' + fmtB(isDir ? getDirSize(n) : (n.size || 0)) + '</div>' +
-      '<div class="tr-fr"></div>' +
-      '<div class="tr-kd">' + (isDir ? 'folder' : 'file') + '</div>' +
-      '<div class="tr-dt">' + (n.modified || '') + '</div>' +
-      '<div class="tr-nt"></div>' +
-      '</div>'
-    );
-    if (isDir && exp && n.children && n.children.length) {
-      childRows(rows, n.children, disk, depth + 1, key);
-    }
-  }
-}
-
-/* ════════════════════════════════════════════════
-   EXPAND / SELECT
-════════════════════════════════════════════════ */
-function togExp(key) {
-  if (expanded.has(key)) expanded.delete(key); else expanded.add(key);
-  renderTree();
-}
-
-function selDisk(id) {
-  const disk = DB.disks.find(d => d.id === id);
-  if (!disk) return;
-  selected = { type: 'disk', disk };
-  // Update selection highlight without full re-render
-  highlightSelected();
-  updateInsp();
-  updateSB();
-  updatePathBar();
-}
-
-function selNode(diskId, key) {
-  const disk = DB.disks.find(d => d.id === diskId);
-  // key = disk.id + '/' + name1 + '/' + name2 ... — walk the path
-  const segs = key.split('/').slice(1); // drop disk.id prefix
-  let nodes = disk?.tree || [];
-  let node = null;
-  for (let i = 0; i < segs.length; i++) {
-    node = nodes.find(n => n.name === segs[i]);
-    if (!node) break;
-    nodes = node.children || [];
-  }
-  selected = { type: 'node', disk, node, key };
-  highlightSelected();
-  updateInsp();
-  updateSB();
-  updatePathBar();
-}
-
-function updatePathBar() {
-  const bar = g('pathbar');
-  if (!selected) { bar.classList.remove('on'); bar.innerHTML = ''; return; }
-  if (selected.type === 'disk') {
-    bar.innerHTML = '<span class="pb-ic">' + ico('hard-drive', 14) + '</span><span class="pb-disk">' + esc(selected.disk.label) + '</span>';
-    bar.classList.add('on');
-    return;
-  }
-  const segs = selected.key.split('/').slice(1);
-  let html = '<span class="pb-ic">' + ico('hard-drive', 14) + '</span><span class="pb-disk">' + esc(selected.disk.label) + '</span>';
-  segs.forEach((s, i) => {
-    const last = i === segs.length - 1;
-    html += '<span class="pb-sep">›</span><span class="pb-seg' + (last ? ' last' : '') + '">' + esc(s) + '</span>';
-  });
-  bar.innerHTML = html;
-  bar.classList.add('on');
-}
-
-function highlightSelected() {
-  // Just toggle .sel class on rows — no DOM rebuild needed
-  document.querySelectorAll('#tree-body .tr.sel').forEach(r => r.classList.remove('sel'));
-  if (!selected) return;
-  const rows = document.querySelectorAll('#tree-body .tr');
-  for (const row of rows) {
-    if (selected.type === 'disk' && row.dataset.type === 'disk' && row.dataset.did === selected.disk?.id) {
-      row.classList.add('sel'); break;
-    }
-    if (selected.type === 'node' && row.dataset.key === selected.key) {
-      row.classList.add('sel'); break;
-    }
-  }
-}
-
-/* ════════════════════════════════════════════════
-   INSPECTOR
-════════════════════════════════════════════════ */
-function updateInsp() {
-  const body = g('ib');
-  if (!inspOpen || !body) return;
-  if (!selected) { body.innerHTML='<div class="ie">' + ico('info', 26) + 'Select an item</div>'; return; }
-
-  if (selected.type === 'disk') {
-    const d=selected.disk, p=pctN(d), fc=fcC(p);
-    const freeCol=pgb(d.free)<10?'var(--re)':pgb(d.free)<50?'var(--ye)':'var(--tx)';
-    body.innerHTML=`
-      <div class="ithumb vol-svg-lg">${volSvg(diskIconName(d))}</div>
-      <div class="is">
-        <div class="ist">General</div>
-        <div class="ir"><span class="ik">Name</span><input class="iv-e" id="in-name" value="${esc(d.label)}" /></div>
-        <div class="ir"><span class="ik">Kind</span><span class="iv">disk</span></div>
-        <div class="ir"><span class="ik">Model</span><span class="iv">${esc(d.model||'—')}</span></div>
-        <div class="ir"><span class="ik">Serial</span><span class="iv">${esc(d.serial||'—')}</span></div>
-        <div class="ir"><span class="ik">Interface</span><span class="iv">${esc(d.iface||'—')}</span></div>
-        <div class="ir"><span class="ik">Files</span><span class="iv">${(d.file_count||0).toLocaleString()}</span></div>
-        <div class="ir"><span class="ik">Scanned</span><span class="iv">${d.scanned?d.scanned.slice(0,10):'—'}</span></div>
-      </div>
-      <div class="is">
-        <div class="ist">Storage</div>
-        <div class="ir"><span class="ik">Total</span><span class="iv v">${esc(d.total||'—')}</span></div>
-        <div class="ir"><span class="ik">Free</span><span class="iv" style="color:${freeCol}">${esc(d.free||'—')}</span></div>
-        <div class="ir"><span class="ik">Used</span><span class="iv">${p}%</span></div>
-        <div class="ibar"><div class="ibfi ${fc}" style="width:${p}%"></div></div>
-      </div>
-      <div class="is">
-        <div class="ist">Comments</div>
-        <textarea class="inta" id="in-note" placeholder="Add a note…">${esc(d.note||'')}</textarea>
-        <button class="insv" id="btn-save-note">Save Note</button>
-      </div>`;
-    g('in-name').addEventListener('blur',  () => saveName(d.id));
-    g('in-name').addEventListener('keydown', e => { if(e.key==='Enter') e.target.blur(); });
-    g('btn-save-note').addEventListener('click', () => saveNote(d.id));
-  } else {
-    const n=selected.node;
-    if (!n) { body.innerHTML='<div class="ie">' + ico('info', 26) + 'Select an item</div>'; return; }
-    const isDir=n.type==='dir', ext=isDir?'':(n.name.split('.').pop()||'').toLowerCase();
-    body.innerHTML=`
-      <div class="ithumb">${isDir?ico('folder',34):fileIcon(n.name,34)}</div>
-      <div class="is">
-        <div class="ist">General</div>
-        <div class="ir"><span class="ik">Name</span><span class="iv">${esc(n.name)}</span></div>
-        <div class="ir"><span class="ik">Kind</span><span class="iv">${isDir?'folder':typeStr(ext)}</span></div>
-        ${(isDir ? getDirSize(n) : n.size) ? `<div class="ir"><span class="ik">Size</span><span class="iv v">${fmtB(isDir ? getDirSize(n) : n.size)}</span></div>` : ''}
-        ${isDir&&n.children?`<div class="ir"><span class="ik">Items</span><span class="iv">${n.children.length}</span></div>`:''}
-        ${ext?`<div class="ir"><span class="ik">Extension</span><span class="iv">.${ext}</span></div>`:''}
-        <div class="ir"><span class="ik">Modified</span><span class="iv">${esc(n.modified||'—')}</span></div>
-        <div class="ir"><span class="ik">Disk</span><span class="iv v">${esc(selected.disk.label)}</span></div>
-      </div>`;
-  }
-}
-
-async function saveName(diskId) {
-  const d=DB.disks.find(x=>x.id===diskId); if(!d)return;
-  const v=g('in-name')?.value.trim();
-  if(v&&v!==d.label){d.label=v;markDirty();renderTree();toast('Renamed.','ok');}
-}
-async function saveNote(diskId) {
-  const d=DB.disks.find(x=>x.id===diskId); if(!d)return;
-  d.note=g('in-note')?.value||'';
-  markDirty();
-  renderTree(); toast('Note saved.','ok');
-}
-function toggleInspector() {
-  inspOpen=!inspOpen;
-  g('insp').classList.toggle('col',!inspOpen);
-}
-
-/* ════════════════════════════════════════════════
-   ADD DISK
-════════════════════════════════════════════════ */
-async function showAddDisk() {
-  pendingVol = null;
-  ['add-label','add-note','add-model','add-serial','add-total','add-free'].forEach(id=>{g(id).value='';});
-  g('btn-confirm-add').disabled = true;
-  g('btn-confirm-add').textContent = 'Scan & add';
-  g('btn-confirm-add').classList.remove('is-update');
-  g('scan-prog').style.display = 'none';
-  g('sp-fill').style.width = '0%';
-  g('add-modal').style.display = 'flex';
-  await refreshVols();
-}
-function hideAddDisk() { g('add-modal').style.display = 'none'; }
-
-async function refreshVols() {
-  const list = g('vol-list');
-  list.innerHTML = '<div style="padding:16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dm);">Detecting volumes…</div>';
-  try {
-    const vols = await window.archivo.listVolumes();
-    if (!vols.length) {
-      list.innerHTML = '<div style="padding:16px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dm);">No volumes detected.</div>';
-      return;
-    }
-    list.innerHTML = '';
-    const filtered = vols.filter(v => {
-      if (hideSystem  && v.vol_type === 'system')  return false;
-      if (hideNetwork && v.vol_type === 'network') return false;
-      return true;
-    });
-    if (!filtered.length) {
-      list.innerHTML = '<div style="padding:12px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dm);">No volumes match the current filters.</div>';
-      return;
-    }
-    filtered.forEach((v, i) => {
-      const p = v.total_bytes > 0 ? Math.round((v.total_bytes - v.free_bytes) / v.total_bytes * 100) : 0;
-      const fc = p>=90?'fc90':p>=80?'fc80':p>=50?'fc50':'fc0';
-      const el = document.createElement('div');
-      el.className = 'vol-item';
-      const vico = volIcon(v);
-      const archived = findExistingDisk('', v.name); // match by name (auto)
-      if (archived) el.classList.add('archived');
-      el.innerHTML = `
-        <div class="vol-ic vol-svg-md">${volSvg(vico)}</div>
-        <div class="vol-info">
-          <div class="vol-name">${esc(v.name)}${archived ? '<span class="vol-badge">Already archived</span>' : ''}</div>
-          <div class="vol-meta">${esc(v.mount_point)} · ${v.file_system||''}</div>
-        </div>
-        <div class="vol-right">
-          <div class="vol-free">${fmtB(v.free_bytes)} free</div>
-          <div class="vol-total">${fmtB(v.total_bytes)}</div>
-          <div class="vol-bar"><div class="vol-bfi ${fc}" style="width:${p}%"></div></div>
-        </div>`;
-      el.addEventListener('click', () => selectVol(el, v));
-      list.appendChild(el);
-    }); // end filtered.forEach
-  } catch(e) {
-    list.innerHTML = `<div style="padding:16px;font-family:var(--mono);font-size:10px;color:var(--re);">Error: ${e}</div>`;
-  }
-}
-
-async function selectVol(el, vol) {
-  document.querySelectorAll('.vol-item').forEach(x=>x.classList.remove('sel'));
-  el.classList.add('sel');
-  pendingVol = vol;
-  g('add-label').value  = vol.name;
-  g('add-total').value  = fmtB(vol.total_bytes);
-  g('add-free').value   = fmtB(vol.free_bytes);
-  g('add-model').value  = 'Detecting…';
-  g('add-serial').value = 'Detecting…';
-  g('btn-confirm-add').disabled = false;
-  // If this volume is already archived, reflect it on the confirm button.
-  const archived = findExistingDisk('', vol.name);
-  if (archived) {
-    g('btn-confirm-add').textContent = 'Update existing';
-    g('btn-confirm-add').classList.add('is-update');
-  } else {
-    g('btn-confirm-add').textContent = 'Scan & add';
-    g('btn-confirm-add').classList.remove('is-update');
-  }
-  try {
-    const hw = await window.archivo.getDiskInfo(vol.mount_point);
-    g('add-model').value  = hw.model  || '—';
-    g('add-serial').value = hw.serial || '—';
-  } catch { g('add-model').value = '—'; g('add-serial').value = '—'; }
-}
-
-let scanInProgress = false;
-
-function fmtETA(sec) {
-  if (!sec || sec <= 0) return '';
-  if (sec < 60) return '~' + sec + 's remaining';
-  const m = Math.floor(sec / 60), s = sec % 60;
-  if (m < 60) return '~' + m + 'm ' + s + 's remaining';
-  const h = Math.floor(m / 60);
-  return '~' + h + 'h ' + (m % 60) + 'm remaining';
-}
-
-function updateScanProgress(p) {
-  if (p.cancelled) {
-    g('sp-stat').textContent = 'Cancelled.';
-    g('sp-pct').textContent = '';
-    g('sp-eta').textContent = '';
-    return;
-  }
-  if (p.phase === 'counting') {
-    g('sp-stat').textContent = p.files ? 'Counting… ' + p.files.toLocaleString() : 'Counting files…';
-    g('sp-pct').textContent  = '';
-    g('sp-eta').textContent  = '';
-    g('sp-fill').style.width = '0%';
-    return;
-  }
-  // Indeterminate (huge volume — total unknown)
-  if (p.pct === -1) {
-    g('sp-stat').textContent = (p.files || 0).toLocaleString() + ' files scanned';
-    g('sp-pct').textContent  = '';
-    g('sp-eta').textContent  = 'Large volume · estimating not available';
-    g('sp-fill').style.width = '100%';
-    g('sp-fill').style.opacity = '0.4';
-    if (p.path) g('sp-det').textContent = p.path;
-    return;
-  }
-  g('sp-fill').style.opacity = '1';
-  const pct = p.pct != null ? p.pct : 0;
-  g('sp-fill').style.width = pct + '%';
-  g('sp-pct').textContent  = pct + '%';
-  g('sp-stat').textContent = p.done ? 'Done.' : (p.files || 0).toLocaleString() + ' / ' + (p.total || 0).toLocaleString() + ' files';
-  g('sp-eta').textContent  = p.done ? '' : fmtETA(p.eta);
-  if (p.path) g('sp-det').textContent = p.path;
-}
-
-async function confirmAddDisk() {
-  if (!pendingVol) { toast('Select a volume first.','err'); return; }
-  const label = g('add-label').value.trim();
-  if (!label)     { toast('Label required.','err'); return; }
-  scanInProgress = true;
-  g('scan-prog').style.display = 'block';
-  g('btn-confirm-add').disabled = true;
-  g('btn-cancel-add').disabled  = true;
-  g('sp-fill').style.width = '0%';
-  g('sp-pct').textContent = '0%';
-  g('sp-stat').textContent = 'Counting files…';
-  g('sp-eta').textContent = '';
-  try {
-    const res = await window.archivo.scanVolume(pendingVol.mount_point);
-    scanInProgress = false;
-    if (res.cancelled) {
-      g('scan-prog').style.display = 'none';
-      g('btn-confirm-add').disabled = false;
-      g('btn-cancel-add').disabled  = false;
-      toast('Scan cancelled.', 'info');
-      return;
-    }
-    const scanData = {
-      label,
-      model:      g('add-model').value,
-      serial:     g('add-serial').value,
-      total:      g('add-total').value,
-      free:       g('add-free').value,
-      iface:      pendingVol.file_system||'',
-      note:       g('add-note').value.trim(),
-      file_count: res.fileCount,
-      tree:       res.tree,
-    };
-
-    // ── Duplicate detection: match by serial (if present) else by label ──
-    const existing = findExistingDisk(scanData.serial, scanData.label);
-
-    if (existing) {
-      // Re-enable buttons under the modal; ask the user what to do
-      g('scan-prog').style.display = 'none';
-      g('btn-confirm-add').disabled = false;
-      g('btn-cancel-add').disabled  = false;
-      const matchReason = (scanData.serial && existing.serial && scanData.serial === existing.serial)
-        ? 'same serial number'
-        : 'same label';
-      showModal('Disk already in catalog',
-        '<strong>' + esc(existing.label) + '</strong> is already in your catalog (' + matchReason + ').<br><br>' +
-        'Update it with the new scan (' + res.fileCount.toLocaleString() + ' files), or add a separate entry?',
-        [
-          { label:'Cancel',     cls:'btn-g', fn:hideModal },
-          { label:'Add anyway', cls:'btn-g', fn:()=>{ hideModal(); commitNewDisk(scanData, res.fileCount); } },
-          { label:'Update',     cls:'btn-p', fn:()=>{ hideModal(); commitUpdateDisk(existing, scanData, res.fileCount); } },
-        ]);
-      return;
-    }
-
-    commitNewDisk(scanData, res.fileCount);
-  } catch(e) {
-    scanInProgress = false;
-    g('scan-prog').style.display='none';
-    g('btn-confirm-add').disabled=false;
-    g('btn-cancel-add').disabled=false;
-    toast('Scan error: '+e,'err');
-  }
-}
-
-// Find a disk already in the catalog matching this scan.
-// Priority: serial number (most reliable) when both have one; otherwise label.
-function findExistingDisk(serial, label) {
-  const s = (serial || '').trim();
-  if (s) {
-    const bySerial = DB.disks.find(d => (d.serial || '').trim() && (d.serial || '').trim() === s);
-    if (bySerial) return bySerial;
-  }
-  const l = (label || '').trim().toLowerCase();
-  return DB.disks.find(d => (d.label || '').trim().toLowerCase() === l) || null;
-}
-
-function commitNewDisk(scanData, fileCount) {
-  const disk = {
-    id:         'disk_'+Date.now(),
-    label:      scanData.label,
-    model:      scanData.model,
-    serial:     scanData.serial,
-    total:      scanData.total,
-    free:       scanData.free,
-    iface:      scanData.iface,
-    note:       scanData.note,
-    scanned:    new Date().toISOString(),
-    file_count: fileCount,
-    tree:       scanData.tree,
-  };
-  DB.disks.push(disk);
-  markDirty();
-  hideAddDisk();
-  expanded.add(disk.id);
-  refreshAll();
-  selDisk(disk.id);
-  toast('"'+disk.label+'" added — '+fileCount.toLocaleString()+' files.','ok');
-}
-
-function commitUpdateDisk(existing, scanData, fileCount) {
-  // Keep the same id (preserves selection/expansion history). Keep the
-  // existing note unless the user typed a new one in the Add Disk form.
-  existing.label      = scanData.label;
-  existing.model      = scanData.model      || existing.model;
-  existing.serial     = scanData.serial     || existing.serial;
-  existing.total      = scanData.total;
-  existing.free       = scanData.free;
-  existing.iface      = scanData.iface      || existing.iface;
-  existing.note       = scanData.note       || existing.note;
-  existing.scanned    = new Date().toISOString();
-  existing.file_count = fileCount;
-  existing.tree       = scanData.tree;
-  markDirty();
-  hideAddDisk();
-  expanded.add(existing.id);
-  refreshAll();
-  selDisk(existing.id);
-  toast('"'+existing.label+'" updated — '+fileCount.toLocaleString()+' files.','ok');
-}
-
-/* ────────────────────────────────────────────────
-   UPDATE AN ARCHIVED DISK FROM THE MOUNTED VOLUME
-   Match is automatic by name (label) only.
-──────────────────────────────────────────────── */
-async function ctxUpdate() {
-  g('ctx').style.display = 'none';
-  if (ctxTarget?.type !== 'disk') return;
-  const disk = DB.disks.find(d => d.id === ctxTarget.diskId);
-  if (!disk) return;
-  await tryUpdateArchivedDisk(disk);
-}
-
-// Look for a mounted volume whose name/label matches the archived disk (by name only).
-async function findMountedVolumeFor(disk) {
-  let vols = [];
-  try { vols = await window.archivo.listVolumes(); } catch { vols = []; }
-  const target = (disk.label || '').trim().toLowerCase();
-  return vols.find(v =>
-    (v.name || '').trim().toLowerCase() === target ||
-    (v.mount_point || '').split(/[\\/]/).filter(Boolean).pop()?.toLowerCase() === target
-  ) || null;
-}
-
-async function tryUpdateArchivedDisk(disk) {
-  const vol = await findMountedVolumeFor(disk);
-  if (!vol) {
-    // Volume not mounted → ask the user to connect it, offer Retry.
-    showModal('Volume not mounted',
-      'To update <strong>' + esc(disk.label) + '</strong>, connect and mount the drive named ' +
-      '<strong>' + esc(disk.label) + '</strong>, then click Retry.<br><br>' +
-      '<span style="color:var(--dm);font-size:12px;">archivo matches the mounted volume by name.</span>',
-      [
-        { label:'Cancel', cls:'btn-g', fn:hideModal },
-        { label:'Retry',  cls:'btn-p', fn:async()=>{ hideModal(); await tryUpdateArchivedDisk(disk); } },
-      ]);
-    return;
-  }
-  // Volume is mounted → scan it and update the existing entry.
-  runUpdateScan(disk, vol);
-}
-
-// Scan a mounted volume and replace the archived disk's tree (keeps id + note).
-async function runUpdateScan(disk, vol) {
-  // Open the Add Disk modal purely to reuse its progress UI.
-  await showAddDisk();
-  pendingVol = vol;
-  g('add-label').value  = disk.label;
-  g('add-total').value  = fmtB(vol.total_bytes);
-  g('add-free').value   = fmtB(vol.free_bytes);
-  g('add-model').value  = disk.model  || '—';
-  g('add-serial').value = disk.serial || '—';
-  g('add-note').value   = disk.note   || '';
-  g('scan-prog').style.display = 'block';
-  g('btn-confirm-add').disabled = true;
-  g('btn-cancel-add').disabled  = true;
-  g('sp-fill').style.width = '0%';
-  g('sp-pct').textContent = '0%';
-  g('sp-stat').textContent = 'Counting files…';
-  g('sp-eta').textContent = '';
-  scanInProgress = true;
-  try {
-    const res = await window.archivo.scanVolume(vol.mount_point);
-    scanInProgress = false;
-    if (res.cancelled) { hideAddDisk(); toast('Update cancelled.', 'info'); return; }
-    const scanData = {
-      label:  disk.label,
-      model:  disk.model,
-      serial: disk.serial,
-      total:  fmtB(vol.total_bytes),
-      free:   fmtB(vol.free_bytes),
-      iface:  vol.file_system || disk.iface,
-      note:   '', // keep the existing note (commitUpdateDisk preserves it when empty)
-      tree:   res.tree,
-    };
-    commitUpdateDisk(disk, scanData, res.fileCount);
-  } catch(e) {
-    scanInProgress = false;
-    hideAddDisk();
-    toast('Update error: ' + e, 'err');
-  }
-}
-
-async function cancelScan() {
-  if (!scanInProgress) return;
-  await window.archivo.cancelScan();
-  g('sp-stat').textContent = 'Cancelling…';
-}
-
-/* ════════════════════════════════════════════════
-   DELETE
-════════════════════════════════════════════════ */
-function deleteSelected() {
-  if (!selected||selected.type!=='disk') { toast('Select a disk first.','err'); return; }
-  const d=selected.disk;
-  showModal('Remove Disk','Remove <strong>'+d.label+'</strong>?<br>The physical disk is not affected.',[
-    {label:'Cancel',cls:'btn-g',fn:hideModal},
-    {label:'Remove',cls:'btn-r',fn:async()=>{
-      DB.disks=DB.disks.filter(x=>x.id!==d.id);
-      expanded.delete(d.id); selected=null;
-      markDirty();
-      refreshAll(); hideModal();
-      toast('"'+d.label+'" removed.','ok');
-    }},
-  ]);
-}
-
-/* ════════════════════════════════════════════════
-   SEARCH
-════════════════════════════════════════════════ */
-function buildIndex() {
-  srchIndex=[];
-  DB.disks.forEach(disk=>{
-    srchIndex.push({disk,node:null,path:disk.label,pp:[]});
-    const stack=[{nodes:disk.tree||[],pfx:disk.label,pp:[]}];
-    while(stack.length){
-      const{nodes,pfx,pp}=stack.pop();
-      for(const n of nodes){
-        const fp=pfx+'/'+n.name, np=[...pp,n.name];
-        srchIndex.push({disk,node:n,path:fp,pp:np});
-        if(n.children&&n.children.length) stack.push({nodes:n.children,pfx:fp,pp:np});
-      }
-    }
-  });
-}
-
-function onSearch(q) {
-  clearTimeout(srchTimer);
-  g('search-clear').style.display = q.trim() ? 'inline' : 'none';
-  if (!q.trim() || q.trim().length < 2) {
-    // Too short — just hide results panel, but DO NOT touch the input value
-    g('srch-panel').classList.remove('on');
-    g('tree-scroll').style.display = '';
-    g('sc').textContent = '';
-    return;
-  }
-  srchTimer = setTimeout(() => execSearch(q), 150);
-}
-
-function execSearch(q) {
-  const ql=q.trim().toLowerCase();
-  g('tree-scroll').style.display='none';
-  g('srch-panel').classList.add('on');
-  const filt=srchIndex.filter(r=>{
-    const nm=(r.node?r.node.name:r.disk.label).toLowerCase();
-    if(!nm.includes(ql))return false;
-    if(srchFilter==='all')return true;
-    if(!r.node)return false;
-    const ext=(r.node.name.split('.').pop()||'').toLowerCase();
-    if(srchFilter==='folder') return r.node.type==='dir';
-    if(srchFilter==='video')  return V.has(ext);
-    if(srchFilter==='image')  return I.has(ext);
-    if(srchFilter==='audio')  return A.has(ext);
-    if(srchFilter==='archive')return AR.has(ext);
-    if(srchFilter==='doc')    return D.has(ext);
-    return true;
-  });
-  const shown=filt.slice(0,600), cap=filt.length>600;
-  g('sc').textContent=cap?filt.length+' results (showing 600)':filt.length+' result'+(filt.length!==1?'s':'');
-  const byDisk={};
-  shown.forEach(r=>{const k=r.disk.id;if(!byDisk[k])byDisk[k]={disk:r.disk,items:[]};byDisk[k].items.push(r);});
-  g('srch-list').innerHTML=Object.values(byDisk).map(grp=>{
-    const rows=grp.items.map(r=>{
-      const nm=r.node?r.node.name:r.disk.label;
-      const ic=!r.node?ico('hard-drive',15):r.node.type==='dir'?ico('folder',15):fileIcon(r.node.name);
-      const hl=esc(nm).replace(new RegExp('('+escRe(q.trim())+')','gi'),'<em>$1</em>');
-      const sz=r.node?fmtB(r.node.type==='dir'?getDirSize(r.node):(r.node.size||0)):'';
-      const dt=r.node?(r.node.modified||''):(r.disk.scanned||'').slice(0,10);
-      return`<div class="sr" data-did="${r.disk.id}" data-pp="${esc(JSON.stringify(r.pp))}" data-nm="${esc(nm)}">
-        <div class="sr-ic">${ic}</div><div class="sr-nm">${hl}</div>
-        <div class="sr-dk">${esc(grp.disk.label)}</div>
-        <div class="sr-pt">${esc(r.path)}</div>
-        <div class="sr-sz">${sz}</div><div class="sr-dt">${dt}</div>
-      </div>`;
-    }).join('');
-    return`<div class="sr-grp">${ico('hard-drive',13)} ${esc(grp.disk.label)} · ${grp.items.length}</div>${rows}`;
-  }).join('');
-  // Wire search result clicks
-  g('srch-list').querySelectorAll('.sr').forEach(el=>{
-    el.addEventListener('click',()=>{
-      const pp=JSON.parse(el.dataset.pp||'[]');
-      goTo(el.dataset.did, pp, el.dataset.nm);
-    });
-  });
-}
-
-function clearSearch() {
-  g('search-inp').value='';
-  g('search-clear').style.display='none';
-  g('srch-panel').classList.remove('on');
-  g('tree-scroll').style.display='';
-  g('sc').textContent='';
-}
-
-function goTo(diskId, pp, name) {
-  clearSearch();
-  const disk=DB.disks.find(d=>d.id===diskId); if(!disk)return;
-  expanded.add(disk.id);
-  let nodes=disk.tree||[];
-  let key = disk.id;
-  for(let i=0;i<pp.length-1;i++){
-    const t=pp[i], nd=nodes.find(n=>n.name===t);
-    if(!nd)break;
-    key = key + '/' + t;
-    expanded.add(key);
-    nodes=nd.children||[];
-  }
-  renderTree();
-  setTimeout(()=>{
-    const rows=g('tree-body').querySelectorAll('.tr');
-    for(const row of rows){
-      const nm=row.querySelector('.tr-nm');
-      if(nm&&nm.textContent.trim()===name){
-        row.classList.add('sel');
-        row.scrollIntoView({behavior:'smooth',block:'center'});
-        break;
-      }
-    }
-  },60);
-}
-
-/* ════════════════════════════════════════════════
-   CONTEXT MENU
-════════════════════════════════════════════════ */
-function showCtx(e, type, diskId, key) {
-  e.preventDefault(); e.stopPropagation();
-  ctxTarget={type, diskId, key};
-  const isDisk=type==='disk';
-  g('ctx-update').style.display     = isDisk?'':'none';
-  g('ctx-sep-upd').style.display    = isDisk?'':'none';
-  g('ctx-rename').style.display = isDisk?'':'none';
-  g('ctx-note').style.display   = isDisk?'':'none';
-  g('ctx-sep').style.display    = isDisk?'':'none';
-  g('ctx-del').style.display    = isDisk?'':'none';
-  const ctx=g('ctx');
-  ctx.style.display='block';
-  ctx.style.left=Math.min(e.clientX,window.innerWidth-210)+'px';
-  ctx.style.top=Math.min(e.clientY,window.innerHeight-210)+'px';
-}
-function ctxRename() {
-  if(ctxTarget?.type!=='disk')return;
-  selDisk(ctxTarget.diskId);
-  setTimeout(()=>{const el=g('in-name');if(el){if(!inspOpen)toggleInspector();el.focus();el.select();}},80);
-}
-function ctxNote() {
-  if(ctxTarget?.type!=='disk')return;
-  selDisk(ctxTarget.diskId);
-  setTimeout(()=>{const el=g('in-note');if(el){if(!inspOpen)toggleInspector();el.focus();}},80);
-}
-function ctxReveal() { toast('Connect the disk to reveal in Finder.','info'); }
-function ctxOpen()   { toast('Connect the disk to open.','info'); }
-function ctxDelete() { if(ctxTarget?.type==='disk'){selDisk(ctxTarget.diskId);deleteSelected();} }
-
-/* ════════════════════════════════════════════════
-   STATUS BAR
-════════════════════════════════════════════════ */
-function updateSB() {
-  let files=0,bytes=0;
-  DB.disks.forEach(d=>{files+=(d.file_count||0);bytes+=pgb(d.total)*1073741824;});
-  g('sb-tot').textContent=files.toLocaleString()+' items · '+DB.disks.length+' disk'+(DB.disks.length!==1?'s':'')+' · '+fmtB(bytes);
-  if(selected){
-    const n=selected.type==='disk'?selected.disk.label:(selected.node?.name||'—');
-    g('sb-sel').textContent='"'+n+'" selected';
-  } else {
-    g('sb-sel').textContent='No selection';
-  }
-}
-
-/* ════════════════════════════════════════════════
-   MODAL
-════════════════════════════════════════════════ */
-function showModal(t,b,actions) {
-  g('mt').textContent=t;
-  g('mb').innerHTML=b;
-  const ma=g('ma'); ma.innerHTML='';
-  actions.forEach(a=>{
-    const btn=document.createElement('button');
-    btn.className=a.cls; btn.textContent=a.label;
-    btn.addEventListener('click',a.fn);
-    ma.appendChild(btn);
-  });
-  g('mw').style.display='flex';
-}
-function hideModal() { g('mw').style.display='none'; }
-
-/* ════════════════════════════════════════════════
-   TOAST
-════════════════════════════════════════════════ */
-function toast(msg,type='') {
-  const el=document.createElement('div');
-  el.className='toast '+(type||'');
-  el.textContent=msg;
-  g('toasts').appendChild(el);
-  setTimeout(()=>el.remove(),3200);
-}
-
-/* ════════════════════════════════════════════════
-   HELPERS
-════════════════════════════════════════════════ */
-
-function volIcon(v) {
-  if (!v) return 'unknown';
-  if (v.vol_type === 'network') return 'network';
-  if (v.vol_type === 'system')  return 'system';
-  if (v.vol_type === 'usb')     return 'USB';
-  return 'unknown';
-}
-function diskIconName(disk) {
-  // Catalogued disk: derive icon from vol_type or iface; archive disks default to USB
-  if (disk.vol_type === 'network') return 'network';
-  if (disk.vol_type === 'system')  return 'system';
-  if (disk.vol_type === 'unknown') return 'unknown';
-  const ifc = (disk.iface || '').toLowerCase();
-  if (ifc.includes('network') || ifc.includes('smb') || ifc.includes('nfs') || ifc.includes('afp')) return 'network';
-  return 'USB';
-}
-
-// Inline SVG icons (line style, colour via currentColor). Mapping:
-//   USB/unknown → disk, system → OS, network → network
-const VOL_SVG = {
-  disk: '<svg viewBox="0 0 22 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9,13h0"/><path d="M1.2,8.6c-.1.3-.2.6-.2.9v5.5c0,1.1.9,2,2,2h16c1.1,0,2-.9,2-2v-5.5c0-.3,0-.6-.2-.9l-3.2-6.5c-.3-.7-1-1.1-1.8-1.1H6.2c-.8,0-1.5.4-1.8,1.1l-3.2,6.5Z"/><path d="M20.9,9H1.1"/><path d="M5,13h0"/></svg>',
-  OS:   '<svg viewBox="0 0 22 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.2,8.6c-.1.3-.2.6-.2.9v5.5c0,1.1.9,2,2,2h16c1.1,0,2-.9,2-2v-5.5c0-.3,0-.6-.2-.9l-3.2-6.5c-.3-.7-1-1.1-1.8-1.1H6.2c-.8,0-1.5.4-1.8,1.1l-3.2,6.5Z"/><path d="M20.9,9H1.1"/><rect x="4.5" y="10.6" width="3.3" height="1.9" rx=".9"/><rect x="3.8" y="13.5" width="4.7" height="1.9" rx=".9"/></svg>',
-  network: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>',
-};
-// Map a volume-type name to an SVG key
-function svgKeyFor(name) {
-  if (name === 'network') return 'network';
-  if (name === 'system')  return 'OS';
-  return 'disk'; // USB + unknown
-}
-function volSvg(name) {
-  return VOL_SVG[svgKeyFor(name)] || VOL_SVG.disk;
-}
-
-
-function g(id)   { return document.getElementById(id); }
-function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
-function pgb(s)  {
-  if(!s)return 0;
-  const m=String(s).match(/([\d.,]+)\s*(TB|GB|MB|B)?/i);
-  if(!m)return 0;
-  const v=parseFloat(m[1].replace(',','.')), u=(m[2]||'GB').toUpperCase();
-  return u==='TB'?v*1024:u==='MB'?v/1024:u==='B'?v/1073741824:v;
-}
-function fmtB(b) {
-  // Real catalogs (DiskCatalogMaker export) store sizes as preformatted
-  // strings like "66 KB" or "1,9 MB". Pass those through unchanged.
-  if (typeof b === 'string') {
-    const t = b.trim();
-    if (!t) return '';
-    // If it's a plain numeric string, convert; otherwise return as-is
-    if (/^\d+(\.\d+)?$/.test(t)) { b = parseFloat(t); }
-    else return t;
-  }
-  if (typeof b !== 'number' || !isFinite(b) || b <= 0) return '';
-  const u = ['B','KB','MB','GB','TB']; let i = 0;
-  while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
-  return b.toFixed(i > 1 ? 1 : 0) + ' ' + u[i];
-}
-function esc(s)    { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function escRe(s)  { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
-function typeStr(ext){
-  if(V.has(ext)) return'Video ('+ext.toUpperCase()+')';
-  if(I.has(ext)) return'Image ('+ext.toUpperCase()+')';
-  if(A.has(ext)) return'Audio ('+ext.toUpperCase()+')';
-  if(AR.has(ext))return'Archive ('+ext.toUpperCase()+')';
-  if(D.has(ext)) return'Document ('+ext.toUpperCase()+')';
-  return ext?ext.toUpperCase()+' file':'file';
-}
-function fileIcon(name, size){
-  const ext=(name.split('.').pop()||'').toLowerCase(), s=size||15;
-  if(V.has(ext)) return ico('film',s);    if(I.has(ext)) return ico('image',s);
-  if(A.has(ext)) return ico('music',s);   if(AR.has(ext))return ico('file-archive',s);
-  if(D.has(ext)) return ico('file-text',s); return ico('file',s);
-}
-</script>
+<script src="app.js"></script>
 </body>
 </html>

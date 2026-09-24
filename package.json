@@ -1,11 +1,12 @@
 {
   "name": "archivo",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "Hard Disk Catalog",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "test": "electron test/smoke.js",
+    "test:scanner": "node test/scanner.test.js",
     "build:mac": "electron-builder --mac --arm64",
     "build:mac-universal": "electron-builder --mac --universal",
     "build:win": "electron-builder --win --x64"
@@ -71,7 +72,7 @@
       }
     },
     "dmg": {
-      "title": "archivo 1.3.3",
+      "title": "archivo 1.4.0",
       "icon": null,
       "internetEnabled": false,
       "writeUpdateInfo": false,

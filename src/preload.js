@@ -28,6 +28,8 @@ contextBridge.exposeInMainWorld('archivo', {
   newDocument:    ()       => ipcRenderer.invoke('doc:new'),
   closeDocument:  ()       => ipcRenderer.invoke('doc:close'),
   setDirty:       d        => ipcRenderer.invoke('doc:set-dirty', d),
+  // What the native menu should grey out: { open, disks, scanning }.
+  uiState:        st       => ipcRenderer.invoke('doc:ui-state', st),
   docReady:       ()       => ipcRenderer.invoke('doc:ready'),
   forceClose:     ok       => ipcRenderer.invoke('window:force-close', ok),
 
@@ -48,8 +50,9 @@ contextBridge.exposeInMainWorld('archivo', {
   scanVolume:     mount    => ipcRenderer.invoke('volumes:scan', mount),
   cancelScan:     ()       => ipcRenderer.invoke('volumes:cancel-scan'),
 
+  // Shows an item in Finder / Explorer (never opens it). Returns false if
+  // the path does not exist.
   revealInFinder: p        => ipcRenderer.invoke('shell:reveal', p),
-  openPath:       p        => ipcRenderer.invoke('shell:open',   p),
 
   onScanProgress: cb       => ipcRenderer.on('scan:progress', (_, d) => cb(d)),
   offScanProgress: ()      => ipcRenderer.removeAllListeners('scan:progress'),
